@@ -6,8 +6,14 @@
 #define IFJ_SCANNER_H
 
 #include <stdio.h>
+#include <stdlib.h>
+#include <ctype.h>
+#include <stdbool.h>
+
+#include "error.h"
+#include "reader.h"
 #include "lexem_string.h"
-#include "stack_indent_dedent.h"
+#include "stack.h"
 
 #define token_scan_accepted 0
 #define token_syntax_accepted 0
@@ -46,7 +52,6 @@ typedef enum {
     token_type_minus,
     token_type_mul,
     token_type_div,
-    token_type_exponent,
     token_type_left_bracket,
     token_type_right_bracket,
     token_type_assign,
@@ -90,10 +95,13 @@ typedef union{
 typedef struct{
     token_attributes attribute;
     Token_types type;
+    int lineNo, colNo;
 } Token;
 
 void set_source_file(FILE *f);
-void set_lexem_string(Lexem_string *string);
+void set_string(Lexem_string *string);
 int get_token(Token *token);
+
+Token* make_token(int lineNo, int colNo);
 
 #endif //IFJ_SCANNER_H

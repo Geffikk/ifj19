@@ -37,8 +37,8 @@ bool add_char_to_lexem_string(Lexem_string *s, char c)
         {
             return false;
         }
+        s->allocated_size_of_lexem_string = s->length_of_lexem_string + 8;
     }
-    s->allocated_size_of_lexem_string = s->length_of_lexem_string + 8;
     s->string[s->length_of_lexem_string++] = c;
     s->string[s->length_of_lexem_string] = '\0';
     return true;
