@@ -200,6 +200,11 @@ int get_token(Token *token, tStack *stack) {
         }
         else
         {
+            if(indentation_count != stack_top_char)
+            {
+                fprintf(stderr, "Inconsistent dedent");
+                return free_source(error_lexical, str);
+            }
             indentation_count = 0; // Count of white space set on zero
         }
     }
@@ -722,7 +727,15 @@ int get_token(Token *token, tStack *stack) {
                     {
                         stackTop(stack, &stack_top_char);
                     }
-                    if(indentation_count > stack_top_char ) // If new identation is greater then push it to stack
+                    if(indentation_count == stack_top_char || c == '#' || c =='"')
+                    {
+                        ungetc(c, source_file);
+                        indentation_count = 0; // set counting lines on zero
+                        dedent_flag = false; // set indentation flag again on false
+                        token->type = token_type_EOL;
+                        return free_source(token_scan_accepted, str);
+                    }
+                    else if(indentation_count > stack_top_char ) // If new identation is greater then push it to stack
                     {
                         stackPush(stack, indentation_count);
                         ungetc(c, source_file);
@@ -731,21 +744,33 @@ int get_token(Token *token, tStack *stack) {
                         token->type = token_type_indent;
                         return free_source(token_scan_accepted, str);
                     }
-                    else if( indentation_count == stack_top_char)
-                    {
-                        ungetc(c, source_file);
-                        indentation_count = 0; // set counting lines on zero
-                        dedent_flag = false; // set indentation flag again on false
-                        token->type = token_type_EOL;
-                        return free_source(token_scan_accepted, str);
-                    }
-                    else // Came dedent so we will poping characters from stack
+                    else if(indentation_count < stack_top_char) // Came dedent so we will poping characters from stack
                     {
                         stackPop(stack);
+
+                        if(stackEmpty(stack) == 1 && indentation_count > 0)
+                        {
+                            fprintf(stderr, "Incorrect indentation");
+                            return free_source(error_lexical, str);
+                        }
+
+                        if(stackEmpty(stack) == 0)
+                        {
+                            stackTop(stack, &stack_top_char);
+                        }
+                        if(indentation_count == stack_top_char)
+                        {
+                            ungetc(c, source_file);
+                            token->type = token_type_dedent;
+                            return free_source(token_scan_accepted, str);
+                        }
+                        else if(indentation_count < stack_top_char)
+                        {
                         ungetc(c, source_file);
                         token->type = token_type_dedent;
                         dedent_flag = true;
                         return free_source(token_scan_accepted, str);
+                        }
                     }
                 }
                 break;
