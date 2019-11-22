@@ -11,20 +11,9 @@
 #include <stdbool.h>
 
 #include "error.h"
-#include "reader.h"
+
 #include "lexem_string.h"
 #include "stack.h"
-
-#define token_scan_accepted 0
-#define token_syntax_accepted 0
-#define error_lexical 1
-#define error_syntax 2
-#define error_semantic 3
-#define error_semantic_compatibility 4
-#define error_semantic_bad_count_param 5
-#define error_semantic_others 6
-#define error_div_zero 9
-#define error_internal 99
 
 /** Type of TOKEN **/
 typedef enum {
@@ -56,6 +45,8 @@ typedef enum {
     token_type_right_bracket,
     token_type_assign,
     token_type_colon,
+    token_type_line_comment,
+    token_type_documentation_comment,
 
 } Token_types;
 
@@ -98,10 +89,30 @@ typedef struct{
     int lineNo, colNo;
 } Token;
 
+/** Set SOURCE FILE (because of using in scanner.c)
+ *
+ * @param f - source file
+ */
 void set_source_file(FILE *f);
-void set_string(Lexem_string *string);
-int get_token(Token *token);
 
-Token* make_token(int lineNo, int colNo);
+/** Set LEXEM STRING (because of using in scanner.c)
+ *
+ * @param string - lexem string
+ */
+void set_string(Lexem_string *string);
+
+/** Set INDENTATION STACK (because of using in scanner.c)
+ *
+ * @param stack - indentation stack
+ */
+void set_stack(tStack *stack);
+
+/** Fuction to get ONE TOKEN
+ *
+ * @param token - input empty token
+ * @param stack - indentation stack
+ * @return - output token with some (attributes, types etc.)
+ */
+int get_token(Token *token, tStack *stack);
 
 #endif //IFJ_SCANNER_H
