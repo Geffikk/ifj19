@@ -784,7 +784,7 @@ int get_token(Token *token, tStack *stack) {
                 else
                 {
                     ungetc(c , source_file);
-                    fprintf(stderr, "Documentation string wrong format!");
+                    fprintf(stderr, "Documentation string wrong format !");
                     return free_source(error_lexical, str);
                 }
                 break;
@@ -799,7 +799,7 @@ int get_token(Token *token, tStack *stack) {
                 else
                 {
                     ungetc(c , source_file);
-                    fprintf(stderr, "Documentation string wrong format!");
+                    fprintf(stderr, "Documentation string wrong format !");
                     return free_source(error_lexical, str);
                 }
                 break;
@@ -813,7 +813,7 @@ int get_token(Token *token, tStack *stack) {
                 else
                 {
                     ungetc(c , source_file);
-                    fprintf(stderr, "Documentation string wrong format!");
+                    fprintf(stderr, "Documentation string wrong format !");
                     return free_source(error_lexical, str);
                 }
                 break;
@@ -829,7 +829,7 @@ int get_token(Token *token, tStack *stack) {
                 else
                 {
                     ungetc(c , source_file);
-                    fprintf(stderr, "Documentation string wrong format!");
+                    fprintf(stderr, "Documentation string wrong format !");
                     return free_source(error_lexical, str);
                 }
         }
