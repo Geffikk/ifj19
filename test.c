@@ -4,7 +4,6 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <inttypes.h>
 #include <string.h>
 
 #include "scanner.h"
@@ -18,12 +17,12 @@ int main()
     lexem_string_init(lexem_string);
     lexem_string_clear(lexem_string);
 
-    //tStack *stack;
-    //stack = (tStack*) malloc(sizeof(tStack));
-    //stackInit(stack);
+    tStack *stack;
+    stack = (tStack*) malloc(sizeof(tStack));
+    stackInit(stack);
 
     char filename[20];
-    char dpath[50]="/home/geffik/CLionProjects/IFJ/";
+    char dpath[50]="/home/geffik/CLionProjects/IFJ-ACTUAL/";
     char fnamepath[100]="";
 
     printf("Enter the filename : ");
@@ -42,6 +41,7 @@ int main()
 
     set_source_file(source_file);
     set_string(lexem_string);
+    set_stack(stack);
 
     bool END_OF_FILE = false;
     bool first_line = true;
@@ -51,22 +51,22 @@ int main()
     while(!END_OF_FILE)
     {
 
-        if(token->type == 5 || first_line)
+        if(token->type == 5 || first_line || token->type == 4 || token->type == 3)
         {
             if(count_lines <= 9)
             {
-                printf("Line [%d]  -  | ", count_lines);
+                printf("Line [%d]  --  | ", count_lines);
             }
             else
             {
-                printf("Line [%d] -  | ", count_lines);
+                printf("Line [%d] --  | ", count_lines);
             }
             first_line = false;
             count_lines ++;
             count_words = 0;
         }
 
-        get_token(token);
+        get_token(token, stack);
 
         switch(token->type)
         {
@@ -146,9 +146,12 @@ int main()
             case (24) :
                 printf("W(%d)-[   :   ]   ", count_words);
                 break;
+            case (26) :
+                printf("W(%d)-[D-SRING]   ", count_words);
+                break;
         }
 
-        if(token->type == 5)
+        if(token->type == 5 || token->type == 4 || token->type == 3)
         {
             printf("\n");
         }
