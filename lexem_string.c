@@ -48,7 +48,7 @@ bool add_char_to_lexem_string(Lexem_string *s, char c)
 
 bool add_string_to_lexem_string(Lexem_string *s, const char *add_string)
 {
-    unsigned length_of_new_string = (unsigned int) strlen(add_string);
+    unsigned int length_of_new_string = (unsigned int) strlen(add_string);
 
     if (s->length_of_lexem_string + length_of_new_string + 1 >= s->allocated_size_of_lexem_string)
     {
