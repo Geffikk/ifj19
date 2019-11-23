@@ -64,6 +64,7 @@ bool add_string_to_lexem_string(Lexem_string *s, const char *add_string)
     s->length_of_lexem_string = s->length_of_lexem_string + length_of_new_string;
     strcat(s->string, add_string);
     s->string[s->length_of_lexem_string] = '\0';
+    return true;
 }
 
 bool cmp_lexem_string_with_another_string(Lexem_string *s, const char *cmp_string)
