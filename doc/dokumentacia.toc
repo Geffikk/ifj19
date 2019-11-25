@@ -1,0 +1,17 @@
+\babel@toc {czech}{}
+\contentsline {section}{\numberline {1}\IeC {\'U}vod}{1}{section.1}
+\contentsline {section}{\numberline {2}Implement\IeC {\'a}cia}{1}{section.2}
+\contentsline {subsection}{\numberline {2.1}Lexik\IeC {\'a}lny analyz\IeC {\'a}tor}{1}{subsection.2.1}
+\contentsline {subsection}{\numberline {2.2}Syntaktick\IeC {\'a} anal\IeC {\'y}za}{2}{subsection.2.2}
+\contentsline {subsection}{\numberline {2.3}Spracovanie v\IeC {\'y}razov}{2}{subsection.2.3}
+\contentsline {subsection}{\numberline {2.4}Generovanie k\IeC {\'o}du}{2}{subsection.2.4}
+\contentsline {subsection}{\numberline {2.5}Interpret}{2}{subsection.2.5}
+\contentsline {section}{\numberline {3}Algoritmy}{3}{section.3}
+\contentsline {subsection}{\numberline {3.1}Hash table}{3}{subsection.3.1}
+\contentsline {subsection}{\numberline {3.2}Dynamick\IeC {\'y} string}{3}{subsection.3.2}
+\contentsline {subsection}{\numberline {3.3}Tabulka prior\IeC {\'\i }t}{3}{subsection.3.3}
+\contentsline {subsection}{\numberline {3.4}Tabu\IeC {\v l}ka symbolov}{3}{subsection.3.4}
+\contentsline {section}{\numberline {4}Pr\IeC {\'a}ca v t\IeC {\'y}me}{3}{section.4}
+\contentsline {section}{\numberline {5}Z\IeC {\'a}ver}{3}{section.5}
+\contentsline {section}{\numberline {6}Digramy}{4}{section.6}
+\contentsline {subsection}{\numberline {6.1}Deterministick\IeC {\'y} kone\IeC {\v c}n\IeC {\'y} automat popisuj\IeC {\'u}ci lexik\IeC {\'a}lnu anal\IeC {\'y}zu}{4}{subsection.6.1}

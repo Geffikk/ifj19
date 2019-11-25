@@ -1,4 +1,4 @@
-DOC = dokumentace
+DOC = dokumentacia
 
 INC_DIR = inc
 
