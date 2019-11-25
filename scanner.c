@@ -798,8 +798,7 @@ int get_token(Token *token, tStack *stack) {
                         indentation_count = 0; // set counting lines on zero
                         dedent_flag = false; // set indentation flag again on false
                         indentation_flag = false;
-                        token->type = token_type_EOL;
-                        return free_source(token_scan_accepted, str);
+                        state = state_start;
                     }
                     else if(indentation_count > stack_top_char ) // If new identation is greater then push it to stack
                     {
