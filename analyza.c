@@ -9,7 +9,6 @@
 #include "scanner.h"
 
 
-
 #define IS_VALUE(token)												\
 	(token).type == token_type_float						\
 	|| (token).type == token_type_int						\
@@ -17,7 +16,7 @@
 	|| (token).type == token_type_identifier
 
 #define GET_TOKEN()													\
-	if ((result = get_token(&data->token)) != token_scan_accepted)\
+	if ((result = get_token(&data->token, &stack)) != token_scan_accepted)\
 		return result
 
 #define CHECK_TYPE(_type)											\
@@ -91,9 +90,9 @@ static int prog(PData* data)
         {
             if (internal_error)
             {
-                return ERROR_INTERNAL;
+                return error_internal;
             } else{
-                return SEM_ERR_UNDEFINED_VAR;
+                return error_semantic;
             }
 
         }
@@ -128,7 +127,7 @@ static int prog(PData* data)
         return main_body(data);
     }
 
-    return SYNTAX_ERR;
+    return error_syntax;
 }
 
 
@@ -144,7 +143,7 @@ static int main_body(PData* data)
     //check if all functios are define
     for(int i = 0; i < MAX_SYMTABLE_SIZE; i++)
         for(Sym_table_item* it = data->global_table[i]; it !=NULL; it = it->next)
-            if(!it->data.defined) return SEM_ERR_UNDEFINED_VAR;
+            if(!it->data.defined) return error_semantic;
 
     //we are in main now
     data->in_function = false;
@@ -182,10 +181,10 @@ static int end_main(PData* data)
     // <end> -> EOF
     if (data->token.type == token_type_EOF)
     {
-        return SYNTAX_OK;
+        return token_scan_accepted;
     }
 
-    return SYNTAX_ERR;
+    return ;
 }
 
 
@@ -206,7 +205,7 @@ static int params(PData* data)
         //if there is function named as parameter
         if(sym_table_search(&data->global_table, data->token.attribute.s->string))
         {
-            return SEM_ERR_UNDEFINED_VAR;
+            return error_semantic;
         }
 
         //add params to the local symbol table
@@ -215,9 +214,9 @@ static int params(PData* data)
         {
             if(internal_error)
             {
-                return ERROR_INTERNAL;
+                return error_internal;
             } else{
-                return SEM_ERR_UNDEFINED_VAR;
+                return error_semantic;
             }
         }
 
@@ -227,7 +226,7 @@ static int params(PData* data)
 
     // <params> ->  ε
 
-    return SYNTAX_OK;
+    return token_scan_accepted;
 }
 
 
@@ -251,9 +250,9 @@ static int param_n(PData* data)
         if(!(data->rhs_id = sym_table_add_symbol(&data->local_table, data->token.attribute.s->string, &internal_error)))
         {
             if (internal_error){
-                return ERROR_INTERNAL;
+                return error_internal;
             } else{
-                return SEM_ERR_UNDEFINED_VAR;
+                return error_semantic;
             }
         }
 
@@ -263,7 +262,7 @@ static int param_n(PData* data)
 
     // <param_n> -> ε
 
-    return SYNTAX_OK;
+    return token_scan_accepted;
 
 }
 
@@ -283,7 +282,7 @@ static int statement(PData* data)
         data->in_while_or_if = true;
 
         data->lhs_id = sym_table_search(&data->global_table, "%exp_result");
-        if(!data->lhs_id) return SEM_ERR_UNDEFINED_VAR;
+        if(!data->lhs_id) return error_semantic;
         data->lhs_id->type = TYPE_BOOL;
 
         char *fuction_id = data->current_id ? data->current_id->identifier : "";
@@ -320,7 +319,7 @@ static int statement(PData* data)
         data->in_while_or_if = true;
 
         data->lhs_id = sym_table_search(&data->global_table, "%exp_result");
-        if(!data->lhs_id) return SEM_ERR_UNDEFINED_VAR;
+        if(!data->lhs_id) return error_semantic;
         data->lhs_id->type = TYPE_BOOL;
 
         char *function_id = data->current_id ? data->current_id->identifier : "";
@@ -351,7 +350,7 @@ static int statement(PData* data)
         //ak ma premenna rovnake meno ako skor definovana funkcia
         if(sym_table_search(&data->global_table, data->token.attribute.s->string))
         {
-            return SEM_ERR_UNDEFINED_VAR;
+            return error_semantic;
         }
 
         //Ak sme vo funkcii tak pridame premennu do lokalnej tabulky
@@ -365,9 +364,9 @@ static int statement(PData* data)
                 data->lhs_id = sym_table_add_symbol(&data->local_table, data->token.attribute.s->string, &internal_error);
                 if(!data->lhs_id || sym_table_search(&data->global_table, data->token.attribute.s->string))
                     if(internal_error)
-                        return ERROR_INTERNAL;
+                        return error_internal;
                     else
-                        return SEM_ERR_UNDEFINED_VAR;
+                        return error_semantic;
             }
 
         }
@@ -376,14 +375,14 @@ static int statement(PData* data)
             TData* id = sym_table_search(&data->global_table, data->token.attribute.s->string);
             if(id != NULL)
             {
-                return SEM_ERR_UNDEFINED_VAR;
+                return error_semantic;
             }
             data->lhs_id = sym_table_add_symbol(&data->global_table, data->token.attribute.s->string, &internal_error);
             if(!data->lhs_id)
                 if(internal_error)
-                    return ERROR_INTERNAL;
+                    return error_internal;
                 else
-                    return SEM_ERR_UNDEFINED_VAR;
+                    return error_semantic;
         }
 
         GET_TOKEN_AND_CHECK_TYPE(token_type_assign);
@@ -429,7 +428,7 @@ static int statement(PData* data)
         if(!data->in_function) return error_syntax;
 
         data->lhs_id = sym_table_search(&data->global_table, "$exp_result");
-        if(!data->lhs_id) return SEM_ERR_UNDEFINED_VAR;
+        if(!data->lhs_id) return error_semantic;
         data->lhs_id->type = data->current_id->type;
 
         //GET_TOKEN_AND_CHECK_RULE(expression);
@@ -457,7 +456,7 @@ static int statement(PData* data)
         return statement(data);
     }
 
-    return SYNTAX_OK;
+    return token_scan_accepted;
 }
 
 /**
@@ -516,7 +515,7 @@ static int def_value(PData* data)
                     break;
 
                 default:
-                    return SYNTAX_ERR;
+                    return ;
             }
         }
 
@@ -528,7 +527,7 @@ static int def_value(PData* data)
             {
                 if (data->lhs_id->type == TYPE_STRING || data->rhs_id->type == TYPE_STRING)
                 {
-                    return SEM_ERR_TYPE_COMPAT;
+                    return error_semantic_compatibility;
                 }
             }
 
@@ -551,16 +550,16 @@ static int def_value(PData* data)
 
 
             if(data->rhs_id->params->length_of_lexem_string != data->param_index) // ma tu byt != ale zase PARAMETRE DPC!
-                return SEM_ERR_WRONG_PARAM;
+                return error_semantic_bad_count_param;
 
 
-            return SYNTAX_OK;
+            return token_scan_accepted;
         }
 
         data->rhs_id = sym_table_search(&data->local_table, data->token.attribute.s->string);
         if(!data->rhs_id)
         {
-            return SEM_ERR_UNDEFINED_VAR;
+            return error_semantic;
         }
     }
 
@@ -568,7 +567,7 @@ static int def_value(PData* data)
     //CHECK_RULE(expression);
     GET_TOKEN();
 
-    return SYNTAX_OK;
+    return token_scan_accepted;
 }
 
 /**
@@ -616,7 +615,7 @@ static int arg(PData* data)
 
     // <arg> -> ε
 
-    return SYNTAX_OK;
+    return token_scan_accepted;
 }
 
 
@@ -638,7 +637,7 @@ static int arg_n(PData* data)
 
     // <arg_n> ->  ε
 
-    return SYNTAX_OK;
+    return token_scan_accepted;
 }
 
 /**
@@ -651,7 +650,7 @@ static int value(PData* data)
     //check number of arguments
     if(data->rhs_id->params->length_of_lexem_string != data->param_index) // ma tu byt == ale este nemam spravene pridavanie parametrov
     {
-        return SEM_ERR_TYPE_COMPAT;
+        return error_semantic_compatibility;
     }
 
     switch(data->token.type)
@@ -659,7 +658,7 @@ static int value(PData* data)
         // <value> -> DOUBLE
         case token_type_float:
             if(data->rhs_id->params->string[data->param_index] == 's')
-                return SEM_ERR_TYPE_COMPAT;
+                return error_semantic_compatibility;
             if(data->rhs_id->params->string[data->param_index] == 'i')
                 printf("good");
             break;
@@ -667,7 +666,7 @@ static int value(PData* data)
         // <value> -> INT
         case token_type_int:
             if(data->rhs_id->params->string[data->param_index] == 's')
-                return SEM_ERR_TYPE_COMPAT;
+                return error_semantic_compatibility;
             if(data->rhs_id->params->string[data->param_index] == 'd')
                 printf("good");
             break;
@@ -675,33 +674,33 @@ static int value(PData* data)
         // <value> -> STRING
         case token_type_str:
             if(data->rhs_id->params->string[data->param_index] != 's')
-                return SEM_ERR_TYPE_COMPAT;
+                return error_semantic_compatibility;
             break;
 
         // <value> -> IDENTIFIER
         case token_type_identifier:; // ; C evil magic
             TData* id = sym_table_search(&data->local_table, data->token.attribute.s->string);
-            if(!id) return SEM_ERR_UNDEFINED_VAR;
+            if(!id) return error_semantic;
 
             switch(id->type)
             {
                 case TYPE_INT:
                     if(data->rhs_id->params->string[data->param_index] == 's')
-                        return SEM_ERR_TYPE_COMPAT;
+                        return error_semantic_compatibility;
                     if(data->rhs_id->params->string[data->param_index] == 'd')
                         printf("good");
                     break;
 
                 case TYPE_DOUBLE:
                     if(data->rhs_id->params->string[data->param_index] == 's')
-                        return SEM_ERR_TYPE_COMPAT;
+                        return error_semantic_compatibility;
                     if(data->rhs_id->params->string[data->param_index] == 'i')
                         printf("good");
                     break;
 
                 case TYPE_STRING:
                     if(data->rhs_id->params->string[data->param_index] != 's')
-                        return SEM_ERR_TYPE_COMPAT;
+                        return error_semantic_compatibility;
                     break;
 
                 default:
@@ -709,13 +708,13 @@ static int value(PData* data)
             }
             break;
         default:
-            return SCANNER_ERROR_LEX;
+            return error_lexical;
     }
 
     // increment argument position
     data->param_index++;
 
-    return SYNTAX_OK;
+    return token_scan_accepted;
 }
 
 /**
@@ -738,7 +737,7 @@ static int print(PData* data)
     {
         CHECK_TYPE(token_type_right_bracket);
 
-        return SYNTAX_OK;
+        return token_scan_accepted;
     }
 
 }
