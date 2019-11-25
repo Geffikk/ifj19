@@ -405,6 +405,11 @@ int get_token(Token *token, tStack *stack) {
                 {
                     state = state_documentation_string_finish_first;
                 }
+                else if (c == EOF)
+                {
+                    ungetc(c, source_file);
+                    return free_source(error_lexical, str);
+                }
                 else
                 {
                     if (!add_char_to_lexem_string(str, c))
@@ -554,7 +559,14 @@ int get_token(Token *token, tStack *stack) {
                     {
                         return free_source(error_internal, str);
                     }
-                    state = state_string;
+                    if(documentation_flag == true)
+                    {
+                        state = state_comment;
+                    }
+                    else
+                    {
+                        state = state_string;
+                    }
                 }
                 else if (c == '\'')
                 {
@@ -563,7 +575,14 @@ int get_token(Token *token, tStack *stack) {
                     {
                         free_source(error_internal, str);
                     }
-                    state = state_string;
+                    if(documentation_flag == true)
+                    {
+                        state = state_comment;
+                    }
+                    else
+                    {
+                        state = state_string;
+                    }
                 }
                 else if (c == '"')
                 {
@@ -588,7 +607,14 @@ int get_token(Token *token, tStack *stack) {
                     {
                         free_source(error_internal, str);
                     }
-                    state = state_string;
+                    if(documentation_flag == true)
+                    {
+                        state = state_comment;
+                    }
+                    else
+                    {
+                        state = state_string;
+                    }
                 }
                 else if (c == '\\')
                 {
@@ -597,7 +623,14 @@ int get_token(Token *token, tStack *stack) {
                     {
                         free_source(error_internal, str);
                     }
-                    state = state_string;
+                    if(documentation_flag == true)
+                    {
+                        state = state_comment;
+                    }
+                    else
+                    {
+                        state = state_string;
+                    }
                 }
                 else if (c == 'x')
                 {
@@ -621,48 +654,56 @@ int get_token(Token *token, tStack *stack) {
 
             case (state_escape_hexadecimal_first):
 
-                if ((c >= '0' && c <= '9') || (c >= 'A' && c <= 'F'))
+                if ((c >= '0' && c <= '9') || (c >= 'A' && c <= 'F') || (c >= 'a' && c <= 'f'))
                 {
                     hex_number[0] = c;
+                    char bad_esc = c;
                     c = (char) getc(source_file);
 
-                    if((c >= '0' && c <= '9') || (c >= 'A' && c <= 'F'))
+                    if((c >= '0' && c <= '9') || (c >= 'A' && c <= 'F') || (c >= 'a' && c <= 'f'))
                     {
-                        state = state_escape_hexadecimal_second;
-                        ungetc(c, source_file);
-                    }
-                    else
-                    {
-                        state = state_string;
-                        ungetc(c, source_file);
+                        hex_number[1] = c;
+                        if(documentation_flag == true)
+                        {
+                            state = state_comment;
+                        }
+                        else
+                        {
+                            state = state_string;
+                        }
+
                         int value = (int) strtol(hex_number, NULL, 16);
                         c = (char) value;
-
                         if (!add_char_to_lexem_string(str, c))
                         {
                             return free_source(error_internal, str);
                         }
                     }
-                }
-                else
-                {
-                    return free_source(error_lexical, str);
-                }
-                break;
-
-
-            case (state_escape_hexadecimal_second):
-
-                if ((c >= '0' && c <= '9') || (c >= 'A' && c <= 'F'))
-                {
-                    hex_number[1] = c;
-                    state = state_string;
-
-                    int value = (int) strtol(hex_number, NULL, 16);
-                    c = (char) value;
-                    if (!add_char_to_lexem_string(str, c))
+                    else
                     {
-                        return free_source(error_internal, str);
+                        if(documentation_flag == true)
+                        {
+                            state = state_comment;
+                        }
+                        else
+                        {
+                            state = state_string;
+                        }
+                        char tmp = '\\';
+                        char tmp2 = 'x';
+                        ungetc(c, source_file);
+                        if (!add_char_to_lexem_string(str, tmp))
+                        {
+                            return free_source(error_internal, str);
+                        }
+                        if (!add_char_to_lexem_string(str, tmp2))
+                        {
+                            return free_source(error_internal, str);
+                        }
+                        if (!add_char_to_lexem_string(str, bad_esc))
+                        {
+                            return free_source(error_internal, str);
+                        }
                     }
                 }
                 else
@@ -845,6 +886,12 @@ int get_token(Token *token, tStack *stack) {
                 if (c == '"')
                 {
                     documentation_flag = false;
+
+                    if (!copy_lexem_string_to_attribute_string(str, token->attribute.s))
+                    {
+                        return free_source(error_internal, str);
+                    }
+
                     token->type = token_type_documentation_comment;
                     return free_source(token_scan_accepted, str);
                 }
