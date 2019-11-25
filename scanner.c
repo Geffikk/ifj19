@@ -42,6 +42,7 @@ tStack *indentation_stack; // Global variable for stack because of using in scan
 int indentation_count = 0; // Counting indentation and compare if indentation is correctly
 bool dedent_flag = false; // FLAG for generating dedent tokens
 bool documentation_flag = false; // FLAG for report that is documentation string
+bool indentation_flag = false;
 
 
 /** Classic return exit function
@@ -190,6 +191,11 @@ int get_token(Token *token, tStack *stack) {
     int state = state_start; // Initial start state
     token->type = token_type_empty; // Set token type that is empty
 
+    if(indentation_flag == true)
+    {
+        state = state_EOL;
+    }
+
     // Control if we have to generate some other dedent token
     if(dedent_flag == true)
     {
@@ -241,7 +247,9 @@ int get_token(Token *token, tStack *stack) {
                 }
                 else if (c == '\n')
                 {
-                    state = state_EOL;
+                    indentation_flag = true;
+                    token->type = token_type_EOL;
+                    return free_source(token_scan_accepted, str);
                 }
                 else if ((isspace(c)))
                 {
@@ -789,6 +797,7 @@ int get_token(Token *token, tStack *stack) {
                         ungetc(c, source_file);
                         indentation_count = 0; // set counting lines on zero
                         dedent_flag = false; // set indentation flag again on false
+                        indentation_flag = false;
                         token->type = token_type_EOL;
                         return free_source(token_scan_accepted, str);
                     }
@@ -798,6 +807,7 @@ int get_token(Token *token, tStack *stack) {
                         ungetc(c, source_file);
                         indentation_count = 0; // set counting lines on zero
                         dedent_flag = false; // set indentation flag again on false
+                        indentation_flag = false;
                         token->type = token_type_indent;
                         return free_source(token_scan_accepted, str);
                     }
@@ -807,6 +817,7 @@ int get_token(Token *token, tStack *stack) {
                         {
                             indentation_count = 0;
                             dedent_flag = false;
+                            indentation_flag = false;
                             fprintf(stderr, "Incorrect indentation \n");
                             return free_source(error_lexical, str);
                         }
@@ -814,6 +825,7 @@ int get_token(Token *token, tStack *stack) {
                         {
                             ungetc(c, source_file);
                             dedent_flag = false;
+                            indentation_flag = false;
                             indentation_count = 0;
                             token->type = token_type_dedent;
                             return free_source(token_scan_accepted, str);
@@ -823,6 +835,7 @@ int get_token(Token *token, tStack *stack) {
                             ungetc(c,source_file);
                             indentation_count = 0;
                             dedent_flag = false;
+                            indentation_flag = false;
                             fprintf(stderr, "Incorrect indentation \n");
                             return free_source(error_lexical, str);
                         }
@@ -831,6 +844,7 @@ int get_token(Token *token, tStack *stack) {
                             stackPop(stack);
                             ungetc(c, source_file);
                             dedent_flag = true;
+                            indentation_flag = false;
                             token->type = token_type_dedent;
                             return free_source(token_scan_accepted, str);
                         }
