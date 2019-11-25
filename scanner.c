@@ -397,6 +397,10 @@ int get_token(Token *token, tStack *stack) {
                     ungetc(c, source_file);
                     return free_source(token_scan_accepted, str);
                 }
+                else if(c == '\\')
+                {
+                    state = state_escape;
+                }
                 else if (c == '"')
                 {
                     state = state_documentation_string_finish_first;
@@ -563,12 +567,19 @@ int get_token(Token *token, tStack *stack) {
                 }
                 else if (c == '"')
                 {
-                    c = '"';
+                    c = '\"';
                     if (!add_char_to_lexem_string(str, c))
                     {
                         free_source(error_internal, str);
                     }
-                    state = state_string;
+                    if(documentation_flag == true)
+                    {
+                        state = state_comment;
+                    }
+                    else
+                    {
+                        state = state_string;
+                    }
                 }
                 else if (c == 't')
                 {
