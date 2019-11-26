@@ -1,9 +1,10 @@
-/****** LEXEM_STRING ******
+
+/****************** LEXEM_STRING **************************
  * @author : Maros Geffert <xgeffe00@stud.fit.vutbr.cz>
  * Subject : IFJ
  * Project : Compiler implementation imperativ language IFJ
  * @brief : Lexem_string
-***************************/
+***********************************************************/
 
 #include <string.h>
 #include <stdlib.h>
@@ -18,7 +19,8 @@ void lexem_string_clear(Lexem_string *s)
 bool lexem_string_init(Lexem_string *s)
 {
     s->string = (char*)malloc(sizeof(char));
-    if (!s->string){
+    if (!s->string)
+    {
         return false;
     }
 
@@ -37,8 +39,8 @@ bool add_char_to_lexem_string(Lexem_string *s, char c)
         {
             return false;
         }
+        s->allocated_size_of_lexem_string = s->length_of_lexem_string + 8;
     }
-    s->allocated_size_of_lexem_string = s->length_of_lexem_string + 8;
     s->string[s->length_of_lexem_string++] = c;
     s->string[s->length_of_lexem_string] = '\0';
     return true;
@@ -46,27 +48,31 @@ bool add_char_to_lexem_string(Lexem_string *s, char c)
 
 bool add_string_to_lexem_string(Lexem_string *s, const char *add_string)
 {
-    unsigned length_of_new_string = (unsigned int) strlen(add_string);
+    unsigned int length_of_new_string = (unsigned int) strlen(add_string);
 
-    if (s->length_of_lexem_string + length_of_new_string + 1 >= s->allocated_size_of_lexem_string){
-        char new_size = length_of_new_string + s->length_of_lexem_string + 1;
+    if (s->length_of_lexem_string + length_of_new_string + 1 >= s->allocated_size_of_lexem_string)
+    {
+        unsigned int new_size = length_of_new_string + s->length_of_lexem_string + 1;
         s->string = (char*)realloc(s->string, new_size);
-        if (!s->string){
+        if (!s->string)
+        {
             return false;
         }
         s->allocated_size_of_lexem_string = new_size;
     }
 
-    s->length_of_lexem_string = s->length_of_lexem_string + length_of_new_string + 1;
+    s->length_of_lexem_string = s->length_of_lexem_string + length_of_new_string;
     strcat(s->string, add_string);
     s->string[s->length_of_lexem_string] = '\0';
+    return true;
 }
 
 bool cmp_lexem_string_with_another_string(Lexem_string *s, const char *cmp_string)
 {
     int result = strcmp(s->string, cmp_string);
 
-    if (result == 0){
+    if (result == 0)
+    {
         return true;
     }
 
@@ -76,9 +82,11 @@ bool cmp_lexem_string_with_another_string(Lexem_string *s, const char *cmp_strin
 bool copy_lexem_string_to_attribute_string(Lexem_string *s, Lexem_string *d)
 {
 
-    if (s->length_of_lexem_string + 1 >= d->allocated_size_of_lexem_string){
+    if (s->length_of_lexem_string + 1 >= d->allocated_size_of_lexem_string)
+    {
         d->string = (char *) realloc(d->string, s->length_of_lexem_string+1);
-        if(!d->string){
+        if(!d->string)
+        {
             return false;
         }
     }
