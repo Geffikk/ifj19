@@ -39,10 +39,13 @@
 FILE *source_file; // Global variable for source file because of using in scanner.c
 Lexem_string *lexem_string; // Global variable for lexem string because of using in scanner.c
 tStack *indentation_stack; // Global variable for stack because of using in scanner.c
+
 int indentation_count = 0; // Counting indentation and compare if indentation is correctly
+
 bool dedent_flag = false; // FLAG for generating dedent tokens
 bool documentation_flag = false; // FLAG for report that is documentation string
 bool indentation_flag = false;
+bool first_line_indented = false;
 
 
 /** Classic return exit function
@@ -224,6 +227,12 @@ int get_token(Token *token, tStack *stack) {
     while (true)
     {
         c = (char) getc(source_file); // Give me one character from source file
+
+        if(c == ' ' && first_line_indented == false)
+        {
+            state = state_EOL;
+        }
+        first_line_indented = true;
 
         switch (state)
         {
@@ -407,7 +416,16 @@ int get_token(Token *token, tStack *stack) {
                 }
                 else if(c == '\\')
                 {
-                    state = state_escape;
+                    c = getc(source_file);
+                    if (c == '"')
+                    {
+                        c = '\"';
+                        if(!add_char_to_lexem_string(str, c))
+                        {
+                            free_source(error_internal, str);
+                        }
+                        break;
+                    }
                 }
                 else if (c == '"')
                 {
@@ -567,14 +585,8 @@ int get_token(Token *token, tStack *stack) {
                     {
                         return free_source(error_internal, str);
                     }
-                    if(documentation_flag == true)
-                    {
-                        state = state_comment;
-                    }
-                    else
-                    {
-                        state = state_string;
-                    }
+                    state = state_string;
+
                 }
                 else if (c == '\'')
                 {
@@ -583,14 +595,7 @@ int get_token(Token *token, tStack *stack) {
                     {
                         free_source(error_internal, str);
                     }
-                    if(documentation_flag == true)
-                    {
-                        state = state_comment;
-                    }
-                    else
-                    {
-                        state = state_string;
-                    }
+                    state = state_string;
                 }
                 else if (c == '"')
                 {
@@ -599,14 +604,7 @@ int get_token(Token *token, tStack *stack) {
                     {
                         free_source(error_internal, str);
                     }
-                    if(documentation_flag == true)
-                    {
-                        state = state_comment;
-                    }
-                    else
-                    {
-                        state = state_string;
-                    }
+                    state = state_string;
                 }
                 else if (c == 't')
                 {
@@ -615,14 +613,7 @@ int get_token(Token *token, tStack *stack) {
                     {
                         free_source(error_internal, str);
                     }
-                    if(documentation_flag == true)
-                    {
-                        state = state_comment;
-                    }
-                    else
-                    {
                         state = state_string;
-                    }
                 }
                 else if (c == '\\')
                 {
@@ -631,14 +622,7 @@ int get_token(Token *token, tStack *stack) {
                     {
                         free_source(error_internal, str);
                     }
-                    if(documentation_flag == true)
-                    {
-                        state = state_comment;
-                    }
-                    else
-                    {
-                        state = state_string;
-                    }
+                    state = state_string;
                 }
                 else if (c == 'x')
                 {
@@ -781,7 +765,7 @@ int get_token(Token *token, tStack *stack) {
 
 
             case (state_EOL):
-                if (isspace(c))
+                if (c == ' ')
                 {
                     indentation_count++; // Counting white spaces before first no white char
                     state = state_EOL;
@@ -792,7 +776,7 @@ int get_token(Token *token, tStack *stack) {
                     {
                         stackTop(stack, &stack_top_char);
                     }
-                    if(indentation_count == stack_top_char || c == '#' || c =='"')
+                    if(indentation_count == stack_top_char || c == '#' || c == '"' || c == EOF || c == '\n')
                     {
                         ungetc(c, source_file);
                         indentation_count = 0; // set counting lines on zero
