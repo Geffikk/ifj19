@@ -309,6 +309,14 @@ int get_token(Token *token, tStack *stack) {
                 }
                 else if (c == '/')
                 {
+                    /*
+                    c = (char) getc(c, source_file);
+                    if (c == '/')
+                    {
+                        token->type = token_type_div_int;
+                        return free_source(token_scan_accepted, str);
+                    }
+                    ungetc(c, source_file);*/
                     token->type = token_type_div;
                     return free_source(token_scan_accepted, str);
                 }
@@ -776,7 +784,7 @@ int get_token(Token *token, tStack *stack) {
                     {
                         stackTop(stack, &stack_top_char);
                     }
-                    if(indentation_count == stack_top_char || c == '#' || c == '"' || c == EOF || c == '\n')
+                    if(indentation_count == stack_top_char || c == '#' || c == '"' || c == '\n')
                     {
                         ungetc(c, source_file);
                         indentation_count = 0; // set counting lines on zero
