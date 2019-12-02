@@ -1,16 +1,19 @@
 
-	////////////////////////////////////////////////////
-	// Author: Andrej Pavlovic <xpavlo14@vutbr.cz>
-	////////////////////////////////////////////////////
-
-
-
-#include "code_generator.h"
-#include "lexem_string.h"
+/***********************************************************
+ * @author : Andrej Pavlovic <xpavlo14@stud.fit.vutbr.cz>
+ * Subject : IFJ
+ * Project : Compiler implementation imperativ language IFJ
+ * @brief : Code generation
+***********************************************************/
 
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
+
+#include "code_generator.h"
+#include "lexem_string.h"
+
+Lexem_string IFJcode19;
 
 
 #define GEN_CHAR(code) \
@@ -26,7 +29,7 @@
 	if ( !add_string_to_lexem_string(&IFJcode19, code "\n") ) return false
 
 #define GEN_INT(code) \
-	{char str[1000]; sprintf(str, "%lu", code); GEN_STRING(str);} // <------------
+	{char str[1000]; sprintf(str, "%lu", code); GEN_STRING(str);}
 
 
 bool Gen_Start () {
@@ -34,7 +37,8 @@ bool Gen_Start () {
 	GEN_CONST_STRING_AND_EOL(".IFJcode19"); GEN_EOL();
 
 	GEN_CONST_STRING_AND_EOL("DEFVAR GF@%expr_result");
-	GEN_CONST_STRING_AND_EOL("CREATEFRAME"); GEN_EOL();
+	GEN_CONST_STRING_AND_EOL("DEFVAR GF@%tmp1");
+	GEN_CONST_STRING_AND_EOL("DEFVAR GF@%tmp2");
 
 	GEN_CONST_STRING_AND_EOL("JUMP ?_main"); GEN_EOL();
 
@@ -43,69 +47,120 @@ bool Gen_Start () {
 
 	GEN_CONST_STRING_AND_EOL("######################    build-in functions    ######################");
 
-	// Vstavana fukcia input
-	GEN_CONST_STRING_AND_EOL("# build-in function input");
-	GEN_CONST_STRING_AND_EOL("LABEL input");
-	GEN_CONST_STRING_AND_EOL("");
-	GEN_CONST_STRING_AND_EOL("");
-	GEN_CONST_STRING_AND_EOL("");
-	GEN_CONST_STRING_AND_EOL("");
-	GEN_CONST_STRING_AND_EOL("");
-	GEN_CONST_STRING_AND_EOL("");
+	// Vstavana fukcia print
+	GEN_CONST_STRING_AND_EOL("# build-in function print");
+	GEN_CONST_STRING_AND_EOL("LABEL print");
+	GEN_CONST_STRING_AND_EOL("DEFVAR LF@s");
+	GEN_CONST_STRING_AND_EOL("POPS LF@s");
+	GEN_CONST_STRING_AND_EOL("WRITE LF@s");
+	GEN_CONST_STRING_AND_EOL("MOVE LF@%retval nil@nil");
 	GEN_CONST_STRING_AND_EOL("RETURN"); GEN_EOL();
 
-	// Vstavana fukcia len *
+	// Vstavana fukcia inputs
+	GEN_CONST_STRING_AND_EOL("# build-in function inputs");
+	GEN_CONST_STRING_AND_EOL("LABEL inputs");
+	GEN_CONST_STRING_AND_EOL("READ LF@%retval string");
+	GEN_CONST_STRING_AND_EOL("RETURN"); GEN_EOL();
+
+	// Vstavana fukcia inputi
+	GEN_CONST_STRING_AND_EOL("# build-in function inputi");
+	GEN_CONST_STRING_AND_EOL("LABEL inputi");
+	GEN_CONST_STRING_AND_EOL("READ LF@%retval int");
+	GEN_CONST_STRING_AND_EOL("RETURN"); GEN_EOL();
+
+	// Vstavana fukcia inputf
+	GEN_CONST_STRING_AND_EOL("# build-in function inputf");
+	GEN_CONST_STRING_AND_EOL("LABEL inputf");
+	GEN_CONST_STRING_AND_EOL("READ LF@%retval float");
+	GEN_CONST_STRING_AND_EOL("RETURN"); GEN_EOL();
+
+	// Vstavana fukcia len
 	GEN_CONST_STRING_AND_EOL("# build-in function len");
 	GEN_CONST_STRING_AND_EOL("LABEL len");
-	GEN_CONST_STRING_AND_EOL("DEFVAR TF@s");
-	GEN_CONST_STRING_AND_EOL("POPS TF@s");
-	GEN_CONST_STRING_AND_EOL("STRLEN LF@%retval TF@s");
+	GEN_CONST_STRING_AND_EOL("DEFVAR LF@s");
+	GEN_CONST_STRING_AND_EOL("POPS LF@s");
+	GEN_CONST_STRING_AND_EOL("STRLEN LF@%retval LF@s");
 	GEN_CONST_STRING_AND_EOL("RETURN"); GEN_EOL();
 
 	// Vstavana fukcia substr
 	GEN_CONST_STRING_AND_EOL("# build-in function substr");
 	GEN_CONST_STRING_AND_EOL("LABEL substr");
-	GEN_CONST_STRING_AND_EOL("DEFVAR TF@n");
-	GEN_CONST_STRING_AND_EOL("POPS TF@n");
-	GEN_CONST_STRING_AND_EOL("DEFVAR TF@i");
-	GEN_CONST_STRING_AND_EOL("POPS TF@i");
-	GEN_CONST_STRING_AND_EOL("DEFVAR TF@s");
-	GEN_CONST_STRING_AND_EOL("POPS TF@s");
-	GEN_CONST_STRING_AND_EOL("");
-	GEN_CONST_STRING_AND_EOL("");
-	GEN_CONST_STRING_AND_EOL("");
-	GEN_CONST_STRING_AND_EOL("RETURN"); GEN_EOL();
-
-	// Vstavana fukcia ord *
-	GEN_CONST_STRING_AND_EOL("# build-in function ord");
-	GEN_CONST_STRING_AND_EOL("LABEL ord");
-	GEN_CONST_STRING_AND_EOL("DEFVAR TF@i");
-	GEN_CONST_STRING_AND_EOL("POPS TF@i");
-	GEN_CONST_STRING_AND_EOL("DEFVAR TF@s");
-	GEN_CONST_STRING_AND_EOL("POPS TF@s");
-	Gen_push_arg("TF@s");
-	Gen_function_call("len");
-	GEN_CONST_STRING_AND_EOL("DEFVAR TF@bool");
-	GEN_CONST_STRING_AND_EOL("GT TF@bool TF@%retval TF@i");
-	GEN_CONST_STRING_AND_EOL("JUMPIFEQ ?_continue_ord TF@bool bool@true");
+	GEN_CONST_STRING_AND_EOL("DEFVAR LF@n");
+	GEN_CONST_STRING_AND_EOL("POPS LF@n");
+	GEN_CONST_STRING_AND_EOL("DEFVAR LF@i");
+	GEN_CONST_STRING_AND_EOL("POPS LF@i");
+	GEN_CONST_STRING_AND_EOL("DEFVAR LF@s");
+	GEN_CONST_STRING_AND_EOL("POPS LF@s");
+	GEN_CONST_STRING_AND_EOL("DEFVAR LF@bool");
+	GEN_CONST_STRING_AND_EOL("GT LF@bool LF@n int@-1");
+	GEN_CONST_STRING_AND_EOL("JUMPIFEQ ?_continue_substr1 LF@bool bool@true");
 	GEN_CONST_STRING_AND_EOL("MOVE LF@%retval nil@nil");
 	GEN_CONST_STRING_AND_EOL("RETURN");
-	GEN_CONST_STRING_AND_EOL("LABEL ?_continue_ord");
-	GEN_CONST_STRING_AND_EOL("GT TF@bool TF@i int@0");
-	GEN_CONST_STRING_AND_EOL("JUMPIFEQ ?_continue_ord2 TF@bool bool@true");
+	GEN_CONST_STRING_AND_EOL("LABEL ?_continue_substr1");
+	GEN_CONST_STRING_AND_EOL("PUSHS LF@s");
+	GEN_CONST_STRING_AND_EOL("CREATEFRAME");
+	GEN_CONST_STRING_AND_EOL("PUSHFRAME");
+	GEN_CONST_STRING_AND_EOL("DEFVAR LF@%retval");
+	GEN_CONST_STRING_AND_EOL("CALL len");
+	GEN_CONST_STRING_AND_EOL("POPFRAME");
+	GEN_CONST_STRING_AND_EOL("GT LF@bool LF@i int@-1");
+	GEN_CONST_STRING_AND_EOL("JUMPIFEQ ?_continue_substr2 LF@bool bool@true");
+	GEN_CONST_STRING_AND_EOL("MOVE LF@%retval nil@nil");
+	GEN_CONST_STRING_AND_EOL("RETURN");
+	GEN_CONST_STRING_AND_EOL("LABEL ?_continue_substr2");
+	GEN_CONST_STRING_AND_EOL("GT LF@bool TF@%retval LF@i");
+	GEN_CONST_STRING_AND_EOL("JUMPIFEQ ?_continue_substr3 LF@bool bool@true");
+	GEN_CONST_STRING_AND_EOL("MOVE LF@%retval nil@nil");
+	GEN_CONST_STRING_AND_EOL("RETURN");
+	GEN_CONST_STRING_AND_EOL("LABEL ?_continue_substr3");
+	GEN_CONST_STRING_AND_EOL("MOVE LF@%retval string@");
+	GEN_CONST_STRING_AND_EOL("ADD LF@n LF@n LF@i");
+	GEN_CONST_STRING_AND_EOL("LABEL ?_while_start");
+	GEN_CONST_STRING_AND_EOL("LT LF@bool LF@i LF@n");
+	GEN_CONST_STRING_AND_EOL("JUMPIFEQ ?_while_end LF@bool bool@false");
+	GEN_CONST_STRING_AND_EOL("LT LF@bool LF@i TF@%retval");
+	GEN_CONST_STRING_AND_EOL("JUMPIFEQ ?_while_end LF@bool bool@false");
+	GEN_CONST_STRING_AND_EOL("GETCHAR LF@bool LF@s LF@i");
+	GEN_CONST_STRING_AND_EOL("CONCAT LF@%retval LF@%retval LF@bool");
+	GEN_CONST_STRING_AND_EOL("ADD LF@i LF@i int@1");
+	GEN_CONST_STRING_AND_EOL("JUMP ?_while_start");
+	GEN_CONST_STRING_AND_EOL("LABEL ?_while_end");
+	GEN_CONST_STRING_AND_EOL("RETURN"); GEN_EOL();
+
+	// Vstavana fukcia ord
+	GEN_CONST_STRING_AND_EOL("# build-in function ord");
+	GEN_CONST_STRING_AND_EOL("LABEL ord");
+	GEN_CONST_STRING_AND_EOL("DEFVAR LF@i");
+	GEN_CONST_STRING_AND_EOL("POPS LF@i");
+	GEN_CONST_STRING_AND_EOL("DEFVAR LF@s");
+	GEN_CONST_STRING_AND_EOL("POPS LF@s");
+	GEN_CONST_STRING_AND_EOL("PUSHS LF@s");
+	GEN_CONST_STRING_AND_EOL("CREATEFRAME");
+	GEN_CONST_STRING_AND_EOL("PUSHFRAME");
+	GEN_CONST_STRING_AND_EOL("DEFVAR LF@%retval");
+	GEN_CONST_STRING_AND_EOL("CALL len");
+	GEN_CONST_STRING_AND_EOL("POPFRAME");
+	GEN_CONST_STRING_AND_EOL("DEFVAR LF@bool");
+	GEN_CONST_STRING_AND_EOL("GT LF@bool TF@%retval LF@i");
+	GEN_CONST_STRING_AND_EOL("JUMPIFEQ ?_continue_ord1 LF@bool bool@true");
+	GEN_CONST_STRING_AND_EOL("MOVE LF@%retval nil@nil");
+	GEN_CONST_STRING_AND_EOL("RETURN");
+	GEN_CONST_STRING_AND_EOL("LABEL ?_continue_ord1");
+	GEN_CONST_STRING_AND_EOL("GT LF@bool LF@i int@-1");
+	GEN_CONST_STRING_AND_EOL("JUMPIFEQ ?_continue_ord2 LF@bool bool@true");
 	GEN_CONST_STRING_AND_EOL("MOVE LF@%retval nil@nil");
 	GEN_CONST_STRING_AND_EOL("RETURN");
 	GEN_CONST_STRING_AND_EOL("LABEL ?_continue_ord2");
-	GEN_CONST_STRING_AND_EOL("GETCHAR LF@%retval TF@s TF@i");
+	GEN_CONST_STRING_AND_EOL("GETCHAR LF@%retval LF@s LF@i");
 	GEN_CONST_STRING_AND_EOL("STRI2INT LF@%retval LF@%retval int@0");
 	GEN_CONST_STRING_AND_EOL("RETURN"); GEN_EOL();
 
-	// Vstavana fukcia chr *
+	// Vstavana fukcia chr
 	GEN_CONST_STRING_AND_EOL("# build-in function chr");
 	GEN_CONST_STRING_AND_EOL("LABEL chr");
-	GEN_CONST_STRING_AND_EOL("DEFVAR TF@i");
-	GEN_CONST_STRING_AND_EOL("POPS TF@i");
-	GEN_CONST_STRING_AND_EOL("INT2CHAR LF@%retval TF@i");
+	GEN_CONST_STRING_AND_EOL("DEFVAR LF@i");
+	GEN_CONST_STRING_AND_EOL("POPS LF@i");
+	GEN_CONST_STRING_AND_EOL("INT2CHAR LF@%retval LF@i");
 	GEN_CONST_STRING_AND_EOL("RETURN"); GEN_EOL();
 
 	// Main
@@ -127,60 +182,222 @@ char* Term_adjustment (const char *term, const int data_type) {
 	
 	switch (data_type) {
 		case 1 :
-			strcpy(new_term, "string@");
-			break;
-		case 2 :
 			strcpy(new_term, "int@");
+			strcat(new_term, term);
 			break;
-		case 3 :
+
+		case 2 :
 			strcpy(new_term, "float@");
+			strcat(new_term, term);
 			break;
-		case 4 :
+
+		case 3 :
 			strcpy(new_term, "nil@");
+			strcat(new_term, term);
 			break;
-		case 5 :
+
+		case 4 :
 			strcpy(new_term, "GF@");
+			strcat(new_term, term);
 			break;
+
+		case 5 :
+			strcpy(new_term, "LF@");
+			strcat(new_term, term);
+			break;
+			
 		case 6 :
-			strcpy(new_term, "TF@");
+			strcpy(new_term, "string@");
+
+			char tmp_str[5];
+			long int len = strlen(term);
+
+			for ( int i = 0 ; i < len ; i++ ) {
+
+				if ( (term[i] <= 32 && term[i] >= 0) || term[i] == 35 ) {
+					sprintf(tmp_str, "\\%03d", (int) term[i]);
+					strcat(new_term, tmp_str);
+				}
+
+				else if ( term[i] == 92 ) {
+
+					switch ( term[++i] ) {
+						case '\"' :
+						case '\'' :
+							tmp_str[0] = term[i];
+							tmp_str[1] = '\0';
+							strcat(new_term, tmp_str);
+							break;
+
+						case 'n' :
+							strcat(new_term, "\\010");
+							break;
+
+						case 't' :
+							strcat(new_term, "\\009");
+							break;
+
+						case '\\' :
+							strcat(new_term, "\\092");
+							break;
+
+						case 'x' :
+							strcat(new_term, "\\");
+
+							tmp_str[0] = term[++i];
+							tmp_str[1] = term[++i];
+							tmp_str[2] = '\0';
+
+							long int dec = strtol(tmp_str, NULL, 16);
+
+							tmp_str[0] = ((char)(dec/100)+'0');
+							tmp_str[1] = ((char)((dec/10)%10)+'0');
+							tmp_str[2] = ((char)(dec%10)+'0');
+							tmp_str[3] = '\0';
+
+							strcat(new_term, tmp_str);
+
+							break;
+
+						default :
+							strcat(new_term, "\\092");
+							tmp_str[0] = term[i];
+							tmp_str[1] = '\0';
+							strcat(new_term, tmp_str);
+					}
+				}
+
+				else {
+					tmp_str[0] = term[i];
+					tmp_str[1] = '\0';
+					strcat(new_term, tmp_str);
+				}
+			}
 			break;
 	}
-
-	strcat(new_term, term);
 	
 	return new_term;
 }
 
-bool Gen_var_def (const char *term) {
-
-	GEN_STRING("DEFVAR ");
-	GEN_STRING(term); GEN_EOL();
-
-	return true;
-}
-
-bool Gen_assignment (const char *dst_term, const char *src_term) {
-
-	GEN_STRING("MOVE ");
-	GEN_STRING(dst_term);
-	GEN_CHAR(' ');
-	GEN_STRING(src_term);
-	GEN_EOL();
-
-	return true;
-}
-
 bool Gen_return (const char *term) {
 
-	GEN_STRING("MOVE LF@%retval ");
-	GEN_STRING(term); GEN_EOL();
+	GEN_STRING("POPS LF@%retval");
 	GEN_CONST_STRING_AND_EOL("RETURN");
 
 	return true;
 }
 
-bool Gen_expression (const char *term) {
+bool Gen_cast_stack_op1 () {
 
+	GEN_CONST_STRING_AND_EOL("INT2FLOATS");
+
+	return true;
+}
+
+bool Gen_cast_stack_op2 () {
+
+	GEN_CONST_STRING_AND_EOL("POPS GF@%tmp1");
+	GEN_CONST_STRING_AND_EOL("INT2FLOATS");
+	GEN_CONST_STRING_AND_EOL("PUSHS GF@%tmp1");
+
+	return true;
+}
+
+bool Gen_push_stack_op (const char *term) {
+
+	GEN_STRING("PUSHS ");
+	GEN_STRING(term); GEN_EOL();
+
+	return true;
+}
+
+bool Gen_var_def (const char *var_id) {
+
+	GEN_STRING("DEFVAR ");
+	GEN_STRING(var_id); GEN_EOL();
+
+	return true;
+}
+
+bool Gen_save_expr_or_retval (const char *var_id) {
+
+	GEN_STRING("POPS ");
+	GEN_STRING(var_id); GEN_EOL();
+	GEN_CONST_STRING_AND_EOL("CLEARS"); // Priebezne cistenie zabudnutych vyrazov
+
+	return true;
+}
+
+bool Gen_expr_calc (Rule_enumeration rule) {
+
+	switch (rule) {
+
+		case RULE_EQUAL :
+			GEN_CONST_STRING_AND_EOL("EQS");
+			break;
+
+		case RULE_NOT_EQUAL :
+			GEN_CONST_STRING_AND_EOL("EQS");
+			GEN_CONST_STRING_AND_EOL("NOTS");
+			break;
+
+		case RULE_LESS_EQUAL :
+			GEN_CONST_STRING_AND_EOL("POPS GF@tmp1");
+			GEN_CONST_STRING_AND_EOL("POPS GF@tmp2");
+			GEN_CONST_STRING_AND_EOL("PUSHS GF@tmp2");
+			GEN_CONST_STRING_AND_EOL("PUSHS GF@tmp1");
+			GEN_CONST_STRING_AND_EOL("LTS");
+			GEN_CONST_STRING_AND_EOL("PUSHS GF2tmp2");
+			GEN_CONST_STRING_AND_EOL("PUSHS GF2tmp1");
+			GEN_CONST_STRING_AND_EOL("EQS");
+			GEN_CONST_STRING_AND_EOL("ORS");
+			break;
+
+		case RULE_MORE_EQUAL :
+			GEN_CONST_STRING_AND_EOL("POPS GF@tmp1");
+			GEN_CONST_STRING_AND_EOL("POPS GF@tmp2");
+			GEN_CONST_STRING_AND_EOL("PUSHS GF@tmp2");
+			GEN_CONST_STRING_AND_EOL("PUSHS GF@tmp1");
+			GEN_CONST_STRING_AND_EOL("GTS");
+			GEN_CONST_STRING_AND_EOL("PUSHS GF2tmp2");
+			GEN_CONST_STRING_AND_EOL("PUSHS GF2tmp1");
+			GEN_CONST_STRING_AND_EOL("EQS");
+			GEN_CONST_STRING_AND_EOL("ORS");
+			break;
+
+		case RULE_LESS :
+			GEN_CONST_STRING_AND_EOL("LTS");
+			break;
+
+		case RULE_MORE :
+			GEN_CONST_STRING_AND_EOL("GTS");
+			break;
+
+		case RULE_PLUS :
+			GEN_CONST_STRING_AND_EOL("ADDS");
+			break;
+
+		case RULE_MINUS :
+			GEN_CONST_STRING_AND_EOL("SUBS");
+			break;
+
+		case RULE_MULTIPLY :
+			GEN_CONST_STRING_AND_EOL("MULS");
+			break;
+
+		case RULE_DIVIDE :
+			GEN_CONST_STRING_AND_EOL("DIVS");
+			break;
+
+		case RULE_DIVIDE_INT :
+			GEN_CONST_STRING_AND_EOL("IDIVS");
+			break;
+
+		default :
+			break;
+	}
+
+	return true;
 }
 
 bool Gen_if_head () {
@@ -188,6 +405,7 @@ bool Gen_if_head () {
 	static unsigned long int i = 0;
 
 	GEN_CONST_STRING_AND_EOL("# if head");
+	GEN_CONST_STRING_AND_EOL("POPS GF@%expr_result");
 	GEN_STRING("JUMPIFEQ ?_else_");
 	GEN_INT(i);
 	GEN_CONST_STRING_AND_EOL(" GF@%expr_result bool@false");
@@ -198,7 +416,7 @@ bool Gen_if_head () {
 }
 
 bool Gen_else_head () {
-	
+
 	static unsigned long int i = 0;
 
 	GEN_CONST_STRING_AND_EOL("# else head");
@@ -213,11 +431,24 @@ bool Gen_else_head () {
 }
 
 bool Gen_else_foot () {
-	
+
 	static unsigned long int i = 0;
 
 	GEN_CONST_STRING_AND_EOL("# else foot");
 	GEN_STRING("JUMP ?_else_end_");
+	GEN_INT(i); GEN_EOL();
+
+	i++;
+
+	return true;
+}
+
+bool Gen_while_label () {
+
+	static unsigned long int i = 0;
+	
+	GEN_CONST_STRING_AND_EOL("# while label");
+	GEN_STRING("LABEL ?_while_");
 	GEN_INT(i); GEN_EOL();
 
 	i++;
@@ -230,8 +461,7 @@ bool Gen_while_head () {
 	static unsigned long int i = 0;
 	
 	GEN_CONST_STRING_AND_EOL("# while head");
-	GEN_STRING("LABEL ?_while_");
-	GEN_INT(i); GEN_EOL();
+	GEN_CONST_STRING_AND_EOL("POPS GF@%expr_result");
 	GEN_STRING("JUMPIFEQ ?_while_end_");
 	GEN_INT(i);
 	GEN_CONST_STRING_AND_EOL(" GF@%expr_result bool@false");
@@ -242,7 +472,7 @@ bool Gen_while_head () {
 }
 
 bool Gen_while_foot () {
-	
+
 	static unsigned long int i = 0;
 
 	GEN_CONST_STRING_AND_EOL("# while foot");
@@ -304,115 +534,16 @@ bool Gen_push_arg (const char *term) { // pushuje sa od zaciatku
 bool Gen_function_call (const char *fun_id) {
 	
 	GEN_CONST_STRING_AND_EOL("# function call");
-	GEN_CONST_STRING_AND_EOL("DEFVAR TF@%retval");
-	GEN_CONST_STRING_AND_EOL("PUSHFRAME");
+
 	GEN_CONST_STRING_AND_EOL("CREATEFRAME");
+	GEN_CONST_STRING_AND_EOL("PUSHFRAME");
+	GEN_CONST_STRING_AND_EOL("DEFVAR LF@%retval");
 
 	GEN_STRING("CALL ");
 	GEN_STRING(fun_id); GEN_EOL();
 
 	GEN_CONST_STRING_AND_EOL("POPFRAME");
+	GEN_CONST_STRING_AND_EOL("PUSHS TF@%retval");
 
 	return true;
 }
-
-bool Gen_print (const char *term) { // vraciat none
-	
-		GEN_STRING("WRITE ");
-
-		char tmp_str[5];
-		long int len = strlen(term);
-
-		for ( int i = 0 ; i < len ; i++ ) {
-
-			if ( (term[i] <= 32 && term[i] >= 0) || term[i] == 35 ) {
-				sprintf(tmp_str, "\\%03d", (int) term[i]);
-				GEN_STRING(tmp_str);
-			}
-
-			else if ( term[i] == 92 ) {
-
-				switch ( term[++i] ) {
-					case '\"' :
-					case '\'' :
-						GEN_CHAR(term[i]);
-						break;
-
-					case 'n' :
-						GEN_STRING("\\010");
-						break;
-
-					case 't' :
-						GEN_STRING("\\009");
-						break;
-
-					case '\\' :
-						GEN_STRING("\\092");
-						break;
-
-					case 'x' :
-						GEN_CHAR('\\');
-
-						tmp_str[0] = term[++i];
-						tmp_str[1] = term[++i];
-						tmp_str[2] = '\0';
-
-						long int dec = strtol(tmp_str, NULL, 16);
-
-						GEN_CHAR((dec/100)+'0');
-						GEN_CHAR(((dec/10)%10)+'0');
-						GEN_CHAR((dec%10)+'0');
-						break;
-
-					default :
-						GEN_STRING("\\092");
-						GEN_CHAR(term[i]);
-				}
-			}
-
-			else {
-				GEN_CHAR(term[i]);
-			}
-		}
-
-	GEN_EOL();
-	return true;
-}
-
-////////////////////////////////////////////////////////////////
-//			START OF DEBUGGING SECTION
-//
-
-// EXIT kody poriesit
-
-// IFJ19 -> _
-// IFJcode19 -> _, -, $, &, %, *, !, ?
-
-bool main() {
-
-	lexem_string_init(&IFJcode19); // Init output dynamic string
-	Gen_Start (); // HEAD
-//==================================================================
-
-
-	Gen_push_arg("string@HAHAHA");
-	Gen_push_arg("int@1");
-	Gen_function_call("ord");
-	Gen_print("TF@%retval");
-	Gen_print("string@\n");
-
-
-
-
-
-
-/*									gen_ord
-	GEN_STRING("DEFVAR GF@A");
-	Gen_ord("GF@A", "string@IHVUIGIUIU", 2); // V -> 86
-	GEN_STRING("WRITE GF@A");
-*/
-//==================================================================
-	printf("%s\n", IFJcode19.string); // Print output dynamic variable
-}
-//			END OF DEBUGGING SECTION
-////////////////////////////////////////////////////////////////
