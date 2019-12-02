@@ -259,15 +259,15 @@ static Rule_enumeration check_Rule (int count_of_operands, Expression_stack_entr
 			case SYMBOL_IDENTIFIER:
                 return RULE_OPERAND;
 			case SYMBOL_INTEGER:
-                data->left_side_id->type = DATA_TYPE_INTEGER;
-                data->left_side_id->is_variable = true;
+              //  data->left_side_id->type = DATA_TYPE_INTEGER;
+             //   data->left_side_id->is_variable = true;
                 return RULE_OPERAND;
 			case SYMBOL_FLOAT:
-                data->left_side_id->type = DATA_TYPE_FLOAT;
-                data->left_side_id->is_variable = true;
+          //      data->left_side_id->type = DATA_TYPE_FLOAT;
+           //     data->left_side_id->is_variable = true;
                 return RULE_OPERAND;
 			case SYMBOL_STRING:
-                data->left_side_id->type = DATA_TYPE_STRING;
+            //    data->left_side_id->type = DATA_TYPE_STRING;
 				return RULE_OPERAND;
 		    default:
                 return RULE_NOT_DEFINED;
@@ -340,7 +340,7 @@ static Rule_enumeration check_Rule (int count_of_operands, Expression_stack_entr
  *  @param -
  *  @return -
  ***/
-int semantic_test (Rule_enumeration rule, Expression_stack_entry* first_operand, Expression_stack_entry* second_operand, Expression_stack_entry* third_operand, Data_type* type_of_result)
+int semantic_test (Rule_enumeration rule, Expression_stack_entry* first_operand, Expression_stack_entry* second_operand, Expression_stack_entry* third_operand, Data_type* type_of_result, Parser_data* data)
 {
     bool first_operand_to_float = false;
     bool third_operand_to_float = false;
@@ -369,11 +369,13 @@ int semantic_test (Rule_enumeration rule, Expression_stack_entry* first_operand,
         {
             return (error_semantic_compatibility);   //error4
         }
-        /*if ((rule == RULE_DIVIDE || rule == RULE_DIVIDE_INTEGER) && second_operand == 0)
+        if (rule == RULE_DIVIDE /*|| rule == RULE_DIVIDE_INTEGER*/)
         {
-            return error_div_zero; //error6
+            if (data->token.attribute.int_number == 0 || data->token.attribute.float_number == 0)
+            {
+                return error_div_zero; //error6
+            }
         }
-         */
     }
 
 /*******************************************************************************************/
@@ -549,7 +551,7 @@ static int reduce_by_rule (Parser_data* data)
 
 	if (generation_rule != RULE_NOT_DEFINED)
     {
-		if ((return_of_function = semantic_test (generation_rule, first_operand, second_operand, third_operand, &type_of_result)))
+		if ((return_of_function = semantic_test (generation_rule, first_operand, second_operand, third_operand, &type_of_result,data)))
 		{
 			return return_of_function;
 		}
@@ -638,8 +640,8 @@ int expression(Parser_data* data)
             return_for_analysis = reduce_by_rule(data);
             if (return_for_analysis)
             {
-//              Expression_stack_free(&stack_exp);
-//              return return_for_analysis;
+              Expression_stack_free(&stack_exp);
+              return return_for_analysis;
             }
         }
         else if (INDEX == MCH)  // prava a lava zatvorka
@@ -684,6 +686,8 @@ int expression(Parser_data* data)
         return error_internal;
     }
 
+    data->left_side_id->type = final_non_ter->data_type;
+
     if (data->left_side_id->type == DATA_TYPE_INTEGER)
     {
         if (final_non_ter->data_type == DATA_TYPE_STRING)
@@ -693,7 +697,7 @@ int expression(Parser_data* data)
         }
 
         printf("GENERATION: Expression result, for integer!\n");
-
+        printf("*********************************************************!\n");
 //		GENERATE_CODE(generate_save_expression_result, data->left_side_id->identifier, final_non_ter->data_type, DATA_TYPE_INT, frame);
     }
     else if (data->left_side_id->type == DATA_TYPE_FLOAT)
@@ -705,7 +709,7 @@ int expression(Parser_data* data)
         }
 
         printf("GENERATION: Expression result, for float!\n");
-
+        printf("*********************************************************!\n");
 //		GENERATE_CODE(generate_save_expression_result, data->left_side_id->identifier, final_non_ter->data_type, DATA_TYPE_FLOAT, frame);
     }
     else if (data->left_side_id->type == DATA_TYPE_STRING)
@@ -717,12 +721,13 @@ int expression(Parser_data* data)
         }
 
         printf("GENERATION: Expression result, for string!\n");
-
+        printf("*********************************************************!\n");
 //		GENERATE_CODE (generate_save_expression_result, data->left_side_id->identifier, DATA_TYPE_STRING, DATA_TYPE_STRING, frame);
     }
     else if (data->left_side_id->type == DATA_TYPE_NOT_DEFINED)
     {
         printf("GENERATION: Expression result, for not defined type!\n");
+        printf("*********************************************************!\n");
 //			GENERATE_CODE (generate_save_expression_result, data->left_side_id->identifier, final_non_ter->data_type, DATA_TYPE_NOT_DEFINED, frame);
     }
 
