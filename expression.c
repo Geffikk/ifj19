@@ -496,11 +496,13 @@ int semantic_test (Rule_enumeration rule, Expression_stack_entry* first_operand,
 
     if (first_operand_to_float == true)
     {
+        Gen_cast_stack_op1 ();
         printf("GENERATION: First operand to float!\n");
     }
 
     if (third_operand_to_float == true)
     {
+        Gen_cast_stack_op2 ();
         printf("GENERATION: Third operand to float!\n");
     }
 
@@ -564,6 +566,7 @@ static int reduce_by_rule (Parser_data* data)
 
         if (generation_rule == RULE_PLUS && type_of_result == DATA_TYPE_STRING)
         {
+            Gen_string_concat ();
             printf("GENERATION : Performing concatenation!\n");
         }
 
@@ -615,7 +618,7 @@ int expression(Parser_data* data)
 		{
 			int result1 = Expression_stack_insert_after_top_ter(&stack_exp, SYMBOL_STOP, DATA_TYPE_NOT_DEFINED); // dosadim si stop symbol
 			int result2 = Expression_stack_push(&stack_exp, actual_symbol, get_data_Type(&data->token, data)); // najprv ziskame data type prveho tokenu,
-            int result3;
+
 			if(!(result1 || result2))
             {
                 Expression_stack_free(&stack_exp);
@@ -624,15 +627,16 @@ int expression(Parser_data* data)
 
             if (actual_symbol == SYMBOL_IDENTIFIER || actual_symbol == SYMBOL_INTEGER || actual_symbol == SYMBOL_FLOAT || actual_symbol == SYMBOL_STRING)
             {
-                    printf("GENERATION: Pushning token!\n");
+                //Gen_push_stack_op ();
+                printf("GENERATION: Pushning token!\n");
             }
 
-            result3 = get_token(&data->token, NULL); // ziskanie dalsieho tokenu, pri prvom prejdeni +
+            return_for_analysis = get_token(&data->token, NULL); // ziskanie dalsieho tokenu, pri prvom prejdeni +
 
-            if(result3)
+            if(return_for_analysis)
             {
-//              Expression_stack_free(&stack_exp);
-//              return return_for_analysis;
+                Expression_stack_free(&stack_exp);
+                return return_for_analysis;
             }
 		}
         else if (INDEX == RED) //zredukovanie vyrazu
@@ -652,8 +656,8 @@ int expression(Parser_data* data)
 
             if(return_for_analysis)
             {
-//              Expression_stack_free(&stack_exp);
-//              return return_for_analysis;
+                Expression_stack_free(&stack_exp);
+                return return_for_analysis;
             }
         }
         else if (INDEX == ERR) // ostali nam iba znaky $
@@ -687,49 +691,7 @@ int expression(Parser_data* data)
     }
 
     data->left_side_id->type = final_non_ter->data_type;
-
-    if (data->left_side_id->type == DATA_TYPE_INTEGER)
-    {
-        if (final_non_ter->data_type == DATA_TYPE_STRING)
-        {
-            Expression_stack_free(&stack_exp);
-            return error_semantic_compatibility;
-        }
-
-        printf("GENERATION: Expression result, for integer!\n");
-        printf("*********************************************************!\n");
-//		GENERATE_CODE(generate_save_expression_result, data->left_side_id->identifier, final_non_ter->data_type, DATA_TYPE_INT, frame);
-    }
-    else if (data->left_side_id->type == DATA_TYPE_FLOAT)
-    {
-        if (final_non_ter->data_type == DATA_TYPE_STRING)
-        {
-            Expression_stack_free(&stack_exp);
-            return error_semantic_compatibility;
-        }
-
-        printf("GENERATION: Expression result, for float!\n");
-        printf("*********************************************************!\n");
-//		GENERATE_CODE(generate_save_expression_result, data->left_side_id->identifier, final_non_ter->data_type, DATA_TYPE_FLOAT, frame);
-    }
-    else if (data->left_side_id->type == DATA_TYPE_STRING)
-    {
-        if (final_non_ter->data_type != DATA_TYPE_STRING)
-        {
-            Expression_stack_free(&stack_exp);
-            return error_semantic_compatibility;
-        }
-
-        printf("GENERATION: Expression result, for string!\n");
-        printf("*********************************************************!\n");
-//		GENERATE_CODE (generate_save_expression_result, data->left_side_id->identifier, DATA_TYPE_STRING, DATA_TYPE_STRING, frame);
-    }
-    else if (data->left_side_id->type == DATA_TYPE_NOT_DEFINED)
-    {
-        printf("GENERATION: Expression result, for not defined type!\n");
-        printf("*********************************************************!\n");
-//			GENERATE_CODE (generate_save_expression_result, data->left_side_id->identifier, final_non_ter->data_type, DATA_TYPE_NOT_DEFINED, frame);
-    }
+    Gen_save_expr_or_retval(data->left_side_id->identifier);
 
     Expression_stack_free(&stack_exp);
     return 0;
