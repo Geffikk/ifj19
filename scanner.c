@@ -24,6 +24,7 @@
 #define state_more_then 116
 #define state_exclamation_mark 117
 #define state_equal 123
+#define state_div 133
 
 // States - operations with strings
 #define state_string 118
@@ -36,6 +37,7 @@
 #define state_documentation_string_finish_first 130
 #define state_documentation_string_finish_second 131
 #define state_documentation_string 132
+
 
 FILE *source_file; // Global variable for source file because of using in scanner.c
 Lexem_string *lexem_string; // Global variable for lexem string because of using in scanner.c
@@ -328,8 +330,9 @@ int get_token(Token *token, tStack *stack) {
                         return free_source(token_scan_accepted, str);
                     }
                     ungetc(c, source_file);*/
-                    token->type = token_type_div;
-                    return free_source(token_scan_accepted, str);
+                    //token->type = token_type_div;
+                    //return free_source(token_scan_accepted, str);
+                    state = state_div;
                 }
                 else if (c == '(')
                 {
@@ -422,7 +425,7 @@ int get_token(Token *token, tStack *stack) {
 
             case (state_comment):
 
-                if (c == '\n')
+                if (c == '\n' && documentation_flag == false)
                 {
                     ungetc(c, source_file);
                     state = state_start;
@@ -431,6 +434,10 @@ int get_token(Token *token, tStack *stack) {
                 {
                     ungetc(c, source_file);
                     return free_source(error_lexical, str);
+                }
+                else if (c == '"' && documentation_flag == true)
+                {
+                    state = state_documentation_string_finish_first;
                 }
                 break;
 
@@ -619,11 +626,12 @@ int get_token(Token *token, tStack *stack) {
                 }
                 else
                 {
-                    char tmp = '\\';
+                    char tmp = 92;
                     if (!add_char_to_lexem_string(str, tmp))
                     {
                         return free_source(error_internal, str);
                     }
+
                     if (!add_char_to_lexem_string(str, c))
                     {
                         return free_source(error_internal, str);
@@ -825,14 +833,6 @@ int get_token(Token *token, tStack *stack) {
                 break;
 
 
-            case(state_documentation_string):
-                if(c == '"')
-                {
-                    state = state_documentation_string_finish_first;
-                }
-                break;
-
-
             case (state_documentation_string_first):
                 if(c == '"')
                 {
@@ -880,15 +880,7 @@ int get_token(Token *token, tStack *stack) {
                 if (c == '"')
                 {
                     documentation_flag = false;
-                    state = state_documentation_string_finish_second;
                     free_source(token_scan_accepted, str);
-                }
-                else if(c == ' ')
-                {
-                    state = state_documentation_string_finish_second;
-                }
-                else if(c == '\n')
-                {
                     state = state_start;
                 }
                 else
@@ -897,6 +889,21 @@ int get_token(Token *token, tStack *stack) {
                     fprintf(stderr, "Documentation string wrong format !");
                     return free_source(error_lexical, str);
                 }
+                break;
+
+            case (state_div):
+                if (c == '/')
+                {
+                    token->type = token_type_div_int;
+                    return free_source(token_scan_accepted, str);
+                }
+                else
+                {
+                    ungetc(c, source_file);
+                    token->type = token_type_div;
+                    return free_source(token_scan_accepted, str);
+                }
+                break;
         }
     }
 }
