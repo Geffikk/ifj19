@@ -35,6 +35,7 @@
 #define state_documentation_string_second 129
 #define state_documentation_string_finish_first 130
 #define state_documentation_string_finish_second 131
+#define state_documentation_string 132
 
 FILE *source_file; // Global variable for source file because of using in scanner.c
 Lexem_string *lexem_string; // Global variable for lexem string because of using in scanner.c
@@ -46,6 +47,7 @@ bool dedent_flag = false; // FLAG for generating dedent tokens
 bool documentation_flag = false; // FLAG for report that is documentation string
 bool indentation_flag = false;
 bool first_line_indented = false;
+bool first_token = true;
 
 
 /** Classic return exit function
@@ -88,6 +90,15 @@ static int isIdentifier_Keyword(Lexem_string *str, Token *token)
     else if (cmp_lexem_string_with_another_string(str, "ord")) token->attribute.keyword = keyword_ord;
     else token->type = token_type_identifier;
 
+    int t = token->attribute.keyword;
+
+    if(t == keyword_chr || t == keyword_ord || t == keyword_substr || t == keyword_len || t == keyword_inputf || t == keyword_inputi || t == keyword_inputs)
+    {
+        if (!copy_lexem_string_to_attribute_string(str, token->attribute.s)) // Assign lexem string to token attribut
+        {
+            return free_source(error_internal, str);
+        }
+    }
     if(token->type != token_type_identifier) // When nothing is assigned then word is identifier
     {
            token->type = token_type_keyword;
@@ -187,7 +198,7 @@ int get_token(Token *token, tStack *stack) {
     }
 
     char c; // One character from source file
-    char hex_number[2] = {0}; // Array where im saving escape sequence (hexadecimal number)
+    char hex_number[2]; // Array where im saving escape sequence (hexadecimal number)
     char stack_top_char = 0; // Assign top char from indentation stack
     char excess_zero = 0; // Assign first number from number and cmp if is 0 && (excess)
 
@@ -411,45 +422,15 @@ int get_token(Token *token, tStack *stack) {
 
             case (state_comment):
 
-                // Control if is just line commentar or documentation string
-                if (c == '\n' && documentation_flag == false)
+                if (c == '\n')
                 {
-                    if (!copy_lexem_string_to_attribute_string(str, token->attribute.s))
-                    {
-                        return free_source(error_internal, str);
-                    }
-                    token->type = token_type_line_comment;
                     ungetc(c, source_file);
-                    return free_source(token_scan_accepted, str);
-                }
-                else if(c == '\\')
-                {
-                    c = getc(source_file);
-                    if (c == '"')
-                    {
-                        c = '\"';
-                        if(!add_char_to_lexem_string(str, c))
-                        {
-                            free_source(error_internal, str);
-                        }
-                        break;
-                    }
-                }
-                else if (c == '"')
-                {
-                    state = state_documentation_string_finish_first;
+                    state = state_start;
                 }
                 else if (c == EOF)
                 {
                     ungetc(c, source_file);
                     return free_source(error_lexical, str);
-                }
-                else
-                {
-                    if (!add_char_to_lexem_string(str, c))
-                    {
-                        free_source(error_internal, str);
-                    }
                 }
                 break;
 
@@ -641,11 +622,11 @@ int get_token(Token *token, tStack *stack) {
                     char tmp = '\\';
                     if (!add_char_to_lexem_string(str, tmp))
                     {
-                        free_source(error_internal, str);
+                        return free_source(error_internal, str);
                     }
                     if (!add_char_to_lexem_string(str, c))
                     {
-                        free_source(error_internal, str);
+                        return free_source(error_internal, str);
                     }
                     state = state_string;
                 }
@@ -844,6 +825,14 @@ int get_token(Token *token, tStack *stack) {
                 break;
 
 
+            case(state_documentation_string):
+                if(c == '"')
+                {
+                    state = state_documentation_string_finish_first;
+                }
+                break;
+
+
             case (state_documentation_string_first):
                 if(c == '"')
                 {
@@ -891,14 +880,16 @@ int get_token(Token *token, tStack *stack) {
                 if (c == '"')
                 {
                     documentation_flag = false;
-
-                    if (!copy_lexem_string_to_attribute_string(str, token->attribute.s))
-                    {
-                        return free_source(error_internal, str);
-                    }
-
-                    token->type = token_type_documentation_comment;
-                    return free_source(token_scan_accepted, str);
+                    state = state_documentation_string_finish_second;
+                    free_source(token_scan_accepted, str);
+                }
+                else if(c == ' ')
+                {
+                    state = state_documentation_string_finish_second;
+                }
+                else if(c == '\n')
+                {
+                    state = state_start;
                 }
                 else
                 {
