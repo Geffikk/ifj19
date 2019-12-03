@@ -125,8 +125,8 @@ static int isInteger(Lexem_string *string, Token *token)
 {
 
     // Convert value from lexem string to integer and assign value to attribute
-    int val = (int) strtol(string->string, (char **)NULL, 10);
-    token->attribute.int_number = val;
+    /*int val = (int) strtol(string->string, (char **)NULL, 10);
+    token->attribute.int_number = val;*/
     token->type = token_type_int; // Set responsive token type
 
     return free_source(token_scan_accepted, string); // Return token scan was succes
@@ -141,13 +141,13 @@ static int isInteger(Lexem_string *string, Token *token)
 static int isFloat(Lexem_string *string, Token *token)
 {
     // Convert value from lexem string to float number and assign value to attribute
-    char *endptr;
+    /*char *endptr;
     float value = strtof(string->string, &endptr);
     if (*endptr)
     {
         return free_source(error_internal, string);
     }
-    token->attribute.float_number = value;
+    token->attribute.float_number = value;*/
     token->type = token_type_float; // Set responsive token type
     return free_source(token_scan_accepted, string); // Return token scan was succes
 }
@@ -766,6 +766,19 @@ int get_token(Token *token, tStack *stack) {
                 {
                     indentation_count++; // Counting white spaces before first no white char
                     state = state_EOL;
+                }
+                else if(c == '\n' || c == '\r')
+                {
+                    indentation_count = 0;
+                    if (c == '\n')
+                    {
+                        ungetc(c, source_file);
+                        state = state_start;
+                    }
+                    else
+                    {
+                        state = state_start;
+                    }
                 }
                 else
                 {
