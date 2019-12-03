@@ -328,6 +328,16 @@ bool Gen_save_expr_or_retval (const char *var_id) {
 	return true;
 }
 
+bool Gen_string_concat () {
+
+	GEN_CONST_STRING_AND_EOL("POPS GF@tmp1");
+	GEN_CONST_STRING_AND_EOL("POPS GF@tmp2");
+	GEN_CONST_STRING_AND_EOL("CONCAT GF@tmp2 GF@tmp2 GF@tmp1");
+	GEN_CONST_STRING_AND_EOL("PUSHS GF@tmp2");
+
+	return true;
+}
+
 bool Gen_expr_calc (Rule_enumeration rule) {
 
 	switch (rule) {

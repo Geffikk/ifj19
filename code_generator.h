@@ -19,6 +19,7 @@ bool Gen_cast_stack_op2 ();
 bool Gen_push_stack_op (const char *term);
 bool Gen_var_def (const char *var_id);
 bool Gen_save_expr_or_retval (const char *var_id);
+bool Gen_string_concat ();
 bool Gen_expr_calc (Rule_enumeration rule);
 bool Gen_if_head ();
 bool Gen_else_head ();
