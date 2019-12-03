@@ -47,6 +47,7 @@ typedef enum {
     token_type_colon,
     token_type_line_comment,
     token_type_documentation_comment,
+    token_type_div_int,
 
 } Token_types;
 
@@ -75,7 +76,7 @@ typedef enum
 } Keywords;
 
 /** Attributes of TOKEN **/
-typedef union{
+typedef struct{
     int int_number;
     float float_number;
     Lexem_string *s;
