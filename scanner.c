@@ -123,11 +123,17 @@ static int isIdentifier_Keyword(Lexem_string *str, Token *token)
  */
 static int isInteger(Lexem_string *string, Token *token)
 {
-
+    /*
     // Convert value from lexem string to integer and assign value to attribute
-    /*int val = (int) strtol(string->string, (char **)NULL, 10);
-    token->attribute.int_number = val;*/
+    int val = (int) strtol(string->string, (char **)NULL, 10);
+    token->attribute.int_number = val;
+     */
     token->type = token_type_int; // Set responsive token type
+
+    if(!copy_lexem_string_to_attribute_string(string, token->attribute.s))
+    {
+        return free_source(error_internal, string);
+    }
 
     return free_source(token_scan_accepted, string); // Return token scan was succes
 }
@@ -140,14 +146,20 @@ static int isInteger(Lexem_string *string, Token *token)
  */
 static int isFloat(Lexem_string *string, Token *token)
 {
+    /*
     // Convert value from lexem string to float number and assign value to attribute
-    /*char *endptr;
+    char *endptr;
     float value = strtof(string->string, &endptr);
     if (*endptr)
     {
         return free_source(error_internal, string);
     }
-    token->attribute.float_number = value;*/
+    token->attribute.float_number = value;
+     */
+    if(!copy_lexem_string_to_attribute_string(string, token->attribute.s))
+    {
+        return free_source(error_internal, string);
+    }
     token->type = token_type_float; // Set responsive token type
     return free_source(token_scan_accepted, string); // Return token scan was succes
 }
@@ -270,8 +282,9 @@ int get_token(Token *token, tStack *stack) {
                 else if (c == '\n')
                 {
                     indentation_flag = true;
-                    token->type = token_type_EOL;
-                    return free_source(token_scan_accepted, str);
+                    //token->type = token_type_EOL;
+                    //return free_source(token_scan_accepted, str);
+                    state = state_start;
                 }
                 else if ((isspace(c)))
                 {
@@ -322,16 +335,6 @@ int get_token(Token *token, tStack *stack) {
                 }
                 else if (c == '/')
                 {
-                    /*
-                    c = (char) getc(c, source_file);
-                    if (c == '/')
-                    {
-                        token->type = token_type_div_int;
-                        return free_source(token_scan_accepted, str);
-                    }
-                    ungetc(c, source_file);*/
-                    //token->type = token_type_div;
-                    //return free_source(token_scan_accepted, str);
                     state = state_div;
                 }
                 else if (c == '(')
@@ -811,7 +814,6 @@ int get_token(Token *token, tStack *stack) {
                             indentation_count = 0;
                             dedent_flag = false;
                             indentation_flag = false;
-                            fprintf(stderr, "Incorrect indentation \n");
                             return free_source(error_lexical, str);
                         }
                         if(indentation_count == stack_top_char)
@@ -829,7 +831,6 @@ int get_token(Token *token, tStack *stack) {
                             indentation_count = 0;
                             dedent_flag = false;
                             indentation_flag = false;
-                            fprintf(stderr, "Incorrect indentation \n");
                             return free_source(error_lexical, str);
                         }
                         else if(indentation_count < stack_top_char)
@@ -854,7 +855,6 @@ int get_token(Token *token, tStack *stack) {
                 else
                 {
                     ungetc(c , source_file);
-                    fprintf(stderr, "Documentation string wrong format !");
                     return free_source(error_lexical, str);
                 }
                 break;
@@ -869,7 +869,6 @@ int get_token(Token *token, tStack *stack) {
                 else
                 {
                     ungetc(c , source_file);
-                    fprintf(stderr, "Documentation string wrong format !");
                     return free_source(error_lexical, str);
                 }
                 break;
@@ -883,7 +882,6 @@ int get_token(Token *token, tStack *stack) {
                 else
                 {
                     ungetc(c , source_file);
-                    fprintf(stderr, "Documentation string wrong format !");
                     return free_source(error_lexical, str);
                 }
                 break;
@@ -899,7 +897,6 @@ int get_token(Token *token, tStack *stack) {
                 else
                 {
                     ungetc(c , source_file);
-                    fprintf(stderr, "Documentation string wrong format !");
                     return free_source(error_lexical, str);
                 }
                 break;
