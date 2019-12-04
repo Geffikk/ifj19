@@ -1,92 +1,104 @@
-/**
-* @brief Implementacia vyrazov parseru	
-* @author Martin Valach
-*/
-
+/************************ EXPRESSION ************************
+ * @author : Martin Valach <xvalac12@stud.fit.vutbr.cz>
+ * Subject : IFJ
+ * Project : Compiler implementation imperativ language IFJ
+ * @brief  : Expression
+***********************************************************/
+#include <stdlib.h>
 #include "scanner.h"
-#include "vyrazy.h"
+#include "expression.h"
 #include "error.h"
+#include "expression_stack.h"
+#include "analyza.h"
+#include "symtable.h"
 #include "code_generator.h"
-#include "symstack.h"
 
-#define FREE_RESOURCES_RETURN(_return)
-	do {
-		symbol_stack_free(&stack);
-		return _return;
-	} while (0)
+Expression_stack stack_exp;
 
-Symbol_stack stack;
-
-typedef enum
+int precedence_table[12][12] =
 {
-	SHIFT,	// < SHIFT 	0
-	MATCH,	// = MATCH 	1
-	REDUC,	// > REDUCE 	2
-	ERROR	// # ERROR 	3
-}
-Sign_enumeration;
+//                                                       INPUT TOKEN
+//<--------------------------------------------------------------->
+//            | == | != | <= | >= | <  | >  |+,- |*/,//| ) | (  |data|  $ |
+/* =  */  {ERR, ERR, ERR, ERR, ERR, ERR, SFT, SFT, RED, SFT, SFT, RED},  // =
+/* != */  {ERR, ERR, ERR, ERR, ERR, ERR, SFT, SFT, RED, SFT, SFT, RED},  // !=
+/* <= */  {ERR, ERR, ERR, ERR, ERR, ERR, SFT, SFT, RED, SFT, SFT, RED},  // <=
+/* >= */  {ERR, ERR, ERR, ERR, ERR, ERR, SFT, SFT, RED, SFT, SFT, RED},  // >=
+/* <  */  {ERR, ERR, ERR, ERR, ERR, ERR, SFT, SFT, RED, SFT, SFT, RED},  // <
+/* > */   {ERR, ERR, ERR, ERR, ERR, ERR, SFT, SFT, RED, SFT, SFT, RED},  // >
+/* +- */  {RED, RED, RED, RED, RED, RED, RED, SFT, RED, SFT, SFT, RED},  // +, -
+/* */     {RED, RED, RED, RED, RED, RED, RED, RED, RED, SFT, SFT, RED},  // *,/,//
+/* |*/    {RED, RED, RED, RED, RED, RED, RED, RED, RED, ERR, ERR, RED},  // )
+/* |*/    {SFT, SFT, SFT, SFT, SFT, SFT, SFT, SFT, MCH, SFT, SFT, ERR},  // (
+/* |*/    {RED, RED, RED, RED, RED, RED, RED, RED, RED, ERR, ERR, RED},  // data
+/* E|*/   {SFT, SFT, SFT, SFT, SFT, SFT, SFT, SFT, ERR, SFT, SFT, ERR}   // $
 
-typedef enum
+
+};
+
+/** Function for transforming symbol to index
+ *
+ *  @param - sytmbol from token
+ *  @return - index for precedence algorithm
+ ***/
+static Index_enumeration get_Index(Symbol_enumeration symbol) // priradi index z precedencnej tabulky
 {
-	INDEX_RELATION_OPERATOR,		// index for ==, !=, <=, >=, <, > 	0 
-	INDEX_PLUS_OR_MINUS,			// index for +, - 			1
-	INDEX_MULTIPLY_OR_DIVIDE,		// index for *, /, // 			2
-	INDEX_RIGHT_BRACKET,			// index for ) 				3
-	INDEX_LEFT_BRACKET,			// index for ( 				4 
-	INDEX_DATA,				// index for identifier and data types 	5
-	INDEX_DOLLAR				// index for $				6
-}
-Index_enumeration;
-
-
-int precedence_table[7][7] =
-{
-//	| REL |  +,- |*,/,//|   )  |   (  | data | other|
-	{ERROR, SHIFT, SHIFT, REDUC, SHIFT, SHIFT, REDUC} // RELATION OPERATORS
-	{REDUC, REDUC, SHIFT, REDUC, SHIFT, SHIFT, REDUC} // +, -
-	{REDUC, REDUC, REDUC, REDUC, SHIFT, SHIFT, REDUC} // *,/,//
-	{REDUC, REDUC, REDUC, REDUC, ERROR, ERROR, REDUC} // )
-	{SHIFT, SHIFT, SHIFT, MATCH, SHIFT, SHIFT, ERROR} // (
-	{REDUC, REDUC, REDUC, REDUC, ERROR, ERROR, REDUC} // data
-	{SHIFT, SHIFT, SHIFT, ERROR, SHIFT, SHIFT, ERROR} // other
-	
-}
-
-static Index_enumeration get_Index (Symbol_enumeration symbol)
-{
-// SYMBOL_EQUAL, SYMBOL_NOT_EQUAL, SYMBOL_LESS_EQUAL, SYMBOL_MORE_EQUAL, SYMBOL_LESS, SYMBOL_MORE
-	if (symbol == 0 || symbol == 1 || symbol == 2 || symbol == 3 || symbol == 4 || symbol == 5)
-	{
-		return INDEX_RELATION_OPERATOR;
-	}
-	else if (symbol == 6 || symbol == 7) // SYMBOL_PLUS, SYMBOL_MINUS
-	{
-		return INDEX_PLUS_OR_MINUS;
-	}
-	else if (symbol == 8 || symbol == 9 || symbol = 10) // SYMBOL_MULTIPLY, SYMBOL_DIVIDE, SYMBOL_DIVIDE_INTEGER
-
-	{
-		return INDEX_MULTIPLY_OR_DIVIDE;
-	}
-	else if (symbol == 11) // SYMBOL_RIGHT_BRACKET
-	{
-		return INDEX_RIGHT_BRACKET;
-	}
-	else if (symbol == 12) // SYMBOL_LEFT_BRACKET
-	{
-		return INDEX_LEFT_BRACKET;
-	}
-	else if (symbol == 13 || symbol == 14 || symbol == 15 || symbol == 16) // SYMBOL_IDENTIFIER, SYMBOL_INTEGER, SYMBOL_FLOAT, SYMBOL_STRING
-	{
-		return INDEX_DATA;
-	}
-	else	// SYMBOL_DOLLAR
-	{
-		return DOLLAR;
-	}
+    if (symbol == SYMBOL_EQUAL)
+    {
+        return INDEX_EQUAL;
+    }
+    else if (symbol == SYMBOL_NOT_EQUAL)
+    {
+        return INDEX_NOT_EQUAL;
+    }
+    else if (symbol == SYMBOL_LESS_EQUAL)
+    {
+        return INDEX_LESS_EQUAL;
+    }
+    else if (symbol == SYMBOL_MORE_EQUAL)
+    {
+        return INDEX_MORE_EQUAL;
+    }
+    else if (symbol == SYMBOL_LESS)
+    {
+        return INDEX_LESS;
+    }
+    else if (symbol == SYMBOL_MORE)
+    {
+        return INDEX_MORE;
+    }
+    else if (symbol == SYMBOL_PLUS || symbol == SYMBOL_MINUS)
+    {
+        return INDEX_PLUS_OR_MINUS;
+    }
+    else if (symbol == SYMBOL_MULTIPLY || symbol == SYMBOL_DIVIDE || symbol == SYMBOL_DIVIDE_INTEGER) // SYMBOL_MULTIPLY, SYMBOL_DIVIDE, SYMBOL_DIVIDE_INTEGER
+    {
+        return INDEX_MULTIPLY_OR_DIVIDE;
+    }
+    else if (symbol == SYMBOL_RIGHT_BRACKET) // SYMBOL_RIGHT_BRACKET
+    {
+        return INDEX_RIGHT_BRACKET;
+    }
+    else if (symbol == SYMBOL_LEFT_BRACKET) // SYMBOL_LEFT_BRACKET
+    {
+        return INDEX_LEFT_BRACKET;
+    }
+    else if (symbol == SYMBOL_IDENTIFIER || symbol == SYMBOL_INTEGER || symbol == SYMBOL_FLOAT || symbol == SYMBOL_STRING) // SYMBOL_IDENTIFIER, SYMBOL_INTEGER, SYMBOL_FLOAT, SYMBOL_STRING
+    {
+        return INDEX_DATA;
+    }
+    else	// SYMBOL_DOLLAR
+    {
+        return INDEX_DOLLAR;
+    }
 }
 
-static Symbol_enumeration get_Symbol (Token* token)
+/** Function for transforming  token to symbol
+ *
+ *  @param token - token received from analysis
+ *  @return - symbol for other functions
+ ***/
+static Symbol_enumeration get_Symbol (Token* token) // v Pdata v analyze mame zadefinovany token, ktory patres posiela
 {
 	if (token->type == token_type_EQ)
 	{
@@ -128,10 +140,10 @@ static Symbol_enumeration get_Symbol (Token* token)
 	{
 		return SYMBOL_DIVIDE;
 	}
-	else if (token->type == token_type_ )
+	/*else if (token->type == token_type_ )
 	{
 		return SYMBOL_DIVIDE_INTEGER;
-	}
+	}*/
 	else if (token->type == token_type_right_bracket)
 	{
 		return SYMBOL_RIGHT_BRACKET;
@@ -140,79 +152,83 @@ static Symbol_enumeration get_Symbol (Token* token)
 	{
 		return SYMBOL_LEFT_BRACKET;
 	}
-	/*
-	else if (token->type == token)
+	else if (token->type == token_type_int)
 	{
 		return SYMBOL_INTEGER;
 	}
-	else if (token->type == token )
+	else if (token->type == token_type_float )
 	{
-		return SYMBOL_float;
+		return SYMBOL_FLOAT;
 	}
-	else if (token->type == token )
+	else if (token->type == token_type_str )
 	{
-		return SYMBOL_CHAR;
+		return SYMBOL_STRING;
 	}
-	else if (token->type == token )
+	else if (token->type == token_type_identifier )
 	{
 		return SYMBOL_IDENTIFIER;
 	}
-	else if (token->type == state )
-	{
-		return SYMBOL_;
-	}
-	*/
 	else
 	{
 		return SYMBOL_DOLLAR;
 	}
 }
 
+/** Function for
+ *
+ *  @param -
+ *  @return -
+ ***/
 static int count_after_stop (bool* stop_on_stack)
 {
 	int counter = 0;
 
-	Symbol_stack_item* pointer = symbol_stack_top(&stack);
+    Expression_stack_entry* pointer = Expression_stack_top(&stack_exp);
 
 	while (pointer != NULL)
 	{
 		if (pointer->symbol != SYMBOL_STOP)
 		{
-			*stop_on_stack = false;
+			*stop_on_stack = false; // nenasli sme stop na stacku
 			counter++;
 		}
 		else
 		{
-			*stop_on_stack = true;
+			*stop_on_stack = true; //nasli sme stop na stacku
 			break;
 		}
 
 		pointer = pointer->next;
 	}
 
-	return counter;
+	return counter; // vraciamne pocet znakov po znaku stop na stacku
 }
 
-
-
-static Data_type get_Type (Token* token, PData* data)
+/** Function for
+ *
+ *  @param -
+ *  @return -
+ ***/
+static Data_type get_data_Type (Token* token, Parser_data* data)
 {		
-	if (token_type = token_type_integer)
+	TData* symbol;
+
+    if (token->type == token_type_int)
 	{
 		return DATA_TYPE_INTEGER;
 	}
-	else if (token_type = token_type_float)
+	else if (token->type == token_type_float)
 	{
 		return DATA_TYPE_FLOAT;
 	}
-	else if (token_type = token_type_string)
+	else if (token->type == token_type_str)
 	{
 		return DATA_TYPE_STRING;
 	}
-	else if (token_type = token_type_identifier)
+	else if (token->type == token_type_identifier)
 	{
-		symbol = sym_table_search(&data->local_table, token->attribute.string->str);
-		
+		symbol = sym_table_search(&data->global_table, token->attribute.s->string);
+
 		if (symbol != NULL)
 		{
 			return symbol->type;
@@ -224,33 +240,38 @@ static Data_type get_Type (Token* token, PData* data)
 	}
 	else
 	{
-		return DATA_TYPE_NOT DEFINED;
+		return DATA_TYPE_NOT_DEFINED;
 	}
 }
 
-
-static Rule_enumeration check_Rule (int count_of_operands, symbol_stack_item* first_operand, symbol_stack_item* second_operand, symbol_stack_item* third_operand)
+/** Function for
+ *
+ *  @param -
+ *  @return -
+ ***/
+static Rule_enumeration check_Rule (int count_of_operands, Expression_stack_entry* first_operand, Expression_stack_entry* second_operand, Expression_stack_entry* third_operand, Parser_data* data)
 {
 
-	if (count_of_operands < 1 || count_of_operands > 3)
-	{
-		return RULE_NOT_DEFINED;
-	}
-	else if (count_of_operands == 1)
+	if (count_of_operands == 1)
 	{
 		switch (first_operand->symbol)
 		{
-			case SYMBOL_IDENTIFIER: 
+			case SYMBOL_IDENTIFIER:
+                return RULE_OPERAND;
 			case SYMBOL_INTEGER:
+              //  data->left_side_id->type = DATA_TYPE_INTEGER;
+             //   data->left_side_id->is_variable = true;
+                return RULE_OPERAND;
 			case SYMBOL_FLOAT:
-			case SYMBOL_CHAR:			
+          //      data->left_side_id->type = DATA_TYPE_FLOAT;
+           //     data->left_side_id->is_variable = true;
+                return RULE_OPERAND;
+			case SYMBOL_STRING:
+            //    data->left_side_id->type = DATA_TYPE_STRING;
 				return RULE_OPERAND;
+		    default:
+                return RULE_NOT_DEFINED;
 		}
-		return RULE_NOT_DEFINED;
-	}
-	else if (count_of_operands == 2)
-	{
-		return RULE_NOT_DEFINED;	
 	}
 	else if (count_of_operands == 3)
 	{
@@ -258,7 +279,7 @@ static Rule_enumeration check_Rule (int count_of_operands, symbol_stack_item* fi
 		{
 			if (second_operand->symbol == SYMBOL_EQUAL)
 			{
-				return RULE_EQUAL;
+				return RULE_EQUAL; // rule E -> E = E
 			}
 			else if (second_operand->symbol == SYMBOL_NOT_EQUAL)
 			{
@@ -268,7 +289,7 @@ static Rule_enumeration check_Rule (int count_of_operands, symbol_stack_item* fi
 			{
 				return RULE_LESS_EQUAL;
 			}
-			else if (second_operand->symbol == SYMBOL__MORE_EQUAL)
+			else if (second_operand->symbol == SYMBOL_MORE_EQUAL)
 			{
 				return RULE_MORE_EQUAL;
 			}	
@@ -298,7 +319,7 @@ static Rule_enumeration check_Rule (int count_of_operands, symbol_stack_item* fi
 			}
 			else if (second_operand->symbol == SYMBOL_DIVIDE_INTEGER)
 			{
-				return RULE_DIVIDE_INTEGER;
+				return RULE_DIVIDE;
 			}
 			else
 			{
@@ -314,366 +335,396 @@ static Rule_enumeration check_Rule (int count_of_operands, symbol_stack_item* fi
 
 }
 
-int sematics_test (Rules_enumeration rule, Symbol_stack_item* first_operand, Symbol_stack_item* second_operand, Symbol_stack_item* third_operand, Data_type* type)
+/** Function for
+ *
+ *  @param -
+ *  @return -
+ ***/
+int semantic_test (Rule_enumeration rule, Expression_stack_entry* first_operand, Expression_stack_entry* second_operand, Expression_stack_entry* third_operand, Data_type* type_of_result, Parser_data* data)
 {
+    bool first_operand_to_float = false;
+    bool third_operand_to_float = false;
 
-	int first_operand_to_float = 0;
-	int third_operand_to_float = 0;
+/*******************************************************************************************/
+/******************************ERROR_STATES*************************************************/
+/*******************************************************************************************/
 
+    if (rule == RULE_OPERAND)
+    {
+        if (first_operand == DATA_TYPE_NOT_DEFINED)
+        {
+            return (error_semantic_compatibility);   //error4
+        }
+    }
+    else if (rule == RULE_BRACKETS)
+    {
+        if (second_operand->data_type == DATA_TYPE_NOT_DEFINED)
+        {
+            return (error_semantic_compatibility);   //error4
+        }
+    }
+    else
+    {
+        if (first_operand->data_type == DATA_TYPE_NOT_DEFINED || third_operand->data_type == DATA_TYPE_NOT_DEFINED)
+        {
+            return (error_semantic_compatibility);   //error4
+        }
+        if (rule == RULE_DIVIDE /*|| rule == RULE_DIVIDE_INTEGER*/)
+        {
+            if (data->token.attribute.int_number == 0 || data->token.attribute.float_number == 0)
+            {
+                return error_div_zero; //error6
+            }
+        }
+    }
 
-	if (rule == RULE_OPERAND) 
+/*******************************************************************************************/
+/******************************RULE_STATES**************************************************/
+/*******************************************************************************************/
+    if (rule == RULE_OPERAND)
 	{
-		if (first_operand == DATA_TYPE_NOT_DEFINED)
-		{
-			return error_semantic; //sematicka chyba, nedefinovana premmenna
-		}
+		*type_of_result = first_operand->data_type;
 	}
 	else if (rule == RULE_BRACKETS)
 	{
-		if (second_operand->data_type == DATA_TYPE_NOT_DEFINED)
-		{
-			return error_semantic; //sematicka chyba, nedefinovana premenna
-		}
+		*type_of_result = second_operand->data_type;
 	}
-	else
+	else if (rule == RULE_EQUAL || rule == RULE_NOT_EQUAL || rule == RULE_LESS_EQUAL || rule == RULE_MORE_EQUAL || rule == RULE_LESS || rule == RULE_MORE)
 	{
-		if (second_operand->data_type == DATA_TYPE_NOT_DEFINED || third_operand->data_type = DATA_TYPE_NOT_DEFINED)
-		{
-			return error_semantic; //sematicka chyba, nedefinovana premmenna
-		}
-		if ((rule == RULE_DIVIDE || rule == RULE_DIVIDE_INTEGER) && second_operand == 0)
-		{
-			return error_div_zero; //sematicka chyba, delenie nulou
-		}
-	}
+        *type_of_result = DATA_TYPE_INTEGER;
 
-	if (rule == RULE_OPERAND)
-	{
-		*type = first_operand->data_type;
-	}
-	else if (rule == RULE_BRACKETS)
-	{
-		*type = second_operand->data_type;
-	}
-	else if (rule == RULE_EQUALL || rule == RULE_NOT_EQUAL || rule == RULE_LESS_EQUALL || rule == RULE_MORE_EQUAL || rule == RULE_LESS || rule == RULE_MORE)
-	{
-		//*type = TYPE_BOOL;
-		*type = DATA_TYPE_INTEGER;
+        if (first_operand->data_type !=  third_operand->data_type)
+        {
+            if ((first_operand->data_type == DATA_TYPE_STRING && second_operand->data_type != DATA_TYPE_STRING)||(first_operand->data_type != DATA_TYPE_STRING && second_operand->data_type == DATA_TYPE_STRING))
+            {
+                return (error_semantic_compatibility);   //error4
+            }
+            if (first_operand->data_type == DATA_TYPE_INTEGER || third_operand->data_type == DATA_TYPE_FLOAT)
+            {
+                first_operand_to_float = true;
+            }
 
-		if (first_operand->data_type == DATA_TYPE_INTEGER && third_operand->data_type == DATA_TYPE_FLOAT)
-		{
-			first_operand_to_float = 1;
-			*type = DATA_TYPE_FLOAT;
-		}
-		else if (first_operand->data_type == DATA_TYPE_FLOAT && third_operand->data_type == DATA_TYPE_INTEGER)
-		{
-			third_operand_to_float = 1;
-			*type = DATA_TYPE_FLOAT;
-		}
-/*		else if ()
-		{
-		
-		}*/
-		else if (first_operand->data_type != third_operand->data_type)
-		{
-			return error_semantic_compatibility; // sematicka chyba, nekompatibilne datove typy
-		}
+            if (first_operand->data_type == DATA_TYPE_FLOAT || third_operand->data_type == DATA_TYPE_FLOAT)
+            {
+                third_operand_to_float = true;
+            }
+
+
+
+        }
 	}
 	else if (rule == RULE_PLUS)
 	{
-		*type = DATA_TYPE_INTEGER;
-	
-		if (first_operand->data_type != DATA_TYPE_INTEGER || third_operand->data_type != DATA_TYPE_INTEGER)
-		{
-			if (first_operand->data_type == DATA_TYPE_STRING && third_operand->data_type == DATA_TYPE_STRING) //konkatenacia
-			{
-				*type = DATA_TYPE_STRING;
-			}
+		*type_of_result = DATA_TYPE_INTEGER;
+        if (first_operand->data_type != DATA_TYPE_INTEGER || third_operand->data_type != DATA_TYPE_INTEGER)
+        {
+            if(first_operand->data_type == DATA_TYPE_STRING && third_operand->data_type ==DATA_TYPE_STRING)
+            {
+                *type_of_result = DATA_TYPE_STRING;
+                //konkatenacia
+            }
 
-			if ((first_operand->data_type == DATA_TYPE_STRING && third_operand->data_type != DATA_TYPE_STRING) || (first_operand->data_type == DATA_TYPE_STRING && third_operand->data_type != DATA_TYPE_STRING))
-			{
-				return error_semantic_compatibility; // nekompatibilne datove typy
-			}
+            if ((first_operand->data_type == DATA_TYPE_STRING && third_operand->data_type != DATA_TYPE_STRING) || (first_operand->data_type != DATA_TYPE_STRING && third_operand->data_type == DATA_TYPE_STRING))
+            {
+                return error_semantic_compatibility; //error4
+            }
 
-			if (first_operand->data_type == TYPE_INT)
-			{
-				first_operand_to_float = 1;
-			}
-			else if (third_operand->data_type == TYPE_INT)
-			{
-				third_operand_to_float = 1;
-			}
-			
-			*type = DATA_TYPE_float;
-		}
+            if (first_operand->data_type == DATA_TYPE_INTEGER)
+            {
+                first_operand_to_float = true;
+                *type_of_result = DATA_TYPE_FLOAT;
+            }
+            else if (third_operand->data_type == DATA_TYPE_INTEGER)
+            {
+                third_operand_to_float = true;
+                *type_of_result = DATA_TYPE_FLOAT;
+            }
+        }
 
 	}
 	else if (rule == RULE_MINUS || rule == RULE_MULTIPLY)
 	{
-		*type = DATA_TYPE_INTEGER;
-		
-		if (first_operand->data_type != DATA_TYPE_INTEGER || third_operand->data_type != DATA_TYPE_INTEGER)
-		{
-			if (first_operand->data_type == DATA_TYPE_STRING || third_operand->data_type == DATA_TYPE_STRING)
-			{
-				return error_semantic_compatibility; // nekompatibilne datove typy
-			}
+		*type_of_result = DATA_TYPE_INTEGER;
+        if (first_operand->data_type != DATA_TYPE_INTEGER || third_operand->data_type !=DATA_TYPE_INTEGER)
+        {
+            if(first_operand->data_type == DATA_TYPE_STRING || third_operand->data_type ==DATA_TYPE_STRING)
+            {
+                return (error_semantic_compatibility);   //error4
+            }
 
-			if (first_operand->data_type == TYPE_INT)
-			{
-				first_operand_to_float = 1;
-			}
-			else if (third_operand->data_type == TYPE_INT)
-			{
-				third_operand_to_float = 1;
-			}
-			
-			*type = DATA_TYPE_float;
-		}
+            if (first_operand->data_type == DATA_TYPE_INTEGER)
+            {
+                first_operand_to_float = true;
+            }
+            else if (third_operand->data_type == DATA_TYPE_INTEGER)
+            {
+                third_operand_to_float = true;
+            }
+
+            *type_of_result = DATA_TYPE_FLOAT;
+
+        }
 	}
-	else if (rule = RULE_DIVIDE)
+	else if (rule == RULE_DIVIDE)
 	{
-		*type = DATA_TYPE_FLOAT;
-
-		if (first_operand->data_type != DATA_TYPE_FLOAT || third_operand->data_type != DATA_TYPE_FLOAT)
-		{
-
-			if (first_operand->data_type == DATA_TYPE_INTEGER)
-			{
-				first_operand_to_float = 1;
-			}
-			
-			if (third_operand->data_type == DATA_TYPE_INTEGER)
-			{
-				third_operand_to_float = 1;
-			}
-			
-			if (first_operand->data_type == DATA_TYPE_STRING || third_operand->data_type == DATA_TYPE_STRING)
-			{
-				return error_semantic_compatibility; // sematicka_chyba, nekompatibilne  datove typy
-			}
-		}	
+		*type_of_result = DATA_TYPE_FLOAT;
+        if(first_operand->data_type != DATA_TYPE_FLOAT || third_operand->data_type !=DATA_TYPE_FLOAT)
+        {
+            if(first_operand->data_type == DATA_TYPE_STRING || third_operand->data_type == DATA_TYPE_STRING)
+            {
+                return (error_semantic_compatibility);   //error4
+            }
+            if(first_operand->data_type == DATA_TYPE_INTEGER)
+            {
+                first_operand_to_float = true;
+            }
+            if(third_operand->data_type == DATA_TYPE_INTEGER)
+            {
+                third_operand_to_float = true;
+            }
+        }
 	}
-	else if (rule = RULE_DIVIDE_INTEGER)
-	{	
-		*type = DATA_TYPE_INTEGER;
-
-		if (first_operand->data_type != DATA_TYPE_INTEGER || third_operand->data_type != DATA_TYPE_INTEGER)
-		{
-			return error_semantic_compatibility; // sematicka chyba, nekompatibilne datove typy
-		}
-	
-	}
-	else
+	else if (rule == RULE_DIVIDE_INT)
 	{
-	}
-	
-	if (first_operand_to_float = 1)
-	{
-		GENERATE_CODE(generate_stack_op1_to_float); // docasna funckia
-	}
+        *type_of_result = DATA_TYPE_INTEGER;
 
-	if (third_operand_to_float = 1)
-	{
-		GENERATE_CODE(generate_stack_op1_to_integer); // docasna funckia
-	}
+        if(first_operand->data_type != DATA_TYPE_INTEGER || third_operand->data_type !=DATA_TYPE_INTEGER)
+        {
+            return (error_semantic_compatibility);   //error4
+        }
+    }
 
-	return SYNTAX_OK;
+    if (first_operand_to_float == true)
+    {
+        Gen_cast_stack_op1 ();
+        printf("GENERATION: First operand to float!\n");
+    }
+
+    if (third_operand_to_float == true)
+    {
+        Gen_cast_stack_op2 ();
+        printf("GENERATION: Third operand to float!\n");
+    }
+
+
+    return good_expression_syntax;
 
 }
 
-static int reduce_by_rule (PData* data)
+/** Function for
+ *
+ *  @param -
+ *  @return -
+ ***/
+static int reduce_by_rule (Parser_data* data)
 {
+// tri operandy, za ktore si mozeme dosadzovat znaky
+    Expression_stack_entry* first_operand = NULL;
+    Expression_stack_entry* second_operand = NULL;
+    Expression_stack_entry* third_operand = NULL;
 
-	Symbol_stack_item* first_operand = NULL;
-	Symbol_stack_item* second_operand = NULL;
-	Symbol_stack_item* third_operand = NULL;
+    Rule_enumeration generation_rule;
 
-	Rules_enumeration generation_rule;
-
-	Data_type type;
+	Data_type type_of_result;
 	
-	(void) data;	
+	(void) data;
+    bool stop = false;
+    int return_of_function = 0;
+	int count = count_after_stop(&stop); //pocet znakov okrem stopu
 
-	bool stop = false;
 
-	int count = count_after_stop(&stop);
-
-
-	if (count == 1 && stop)
+	if (count == 1 && stop) // ak je pocet znakov po stop 1 a zaroven sme ho nasli
 	{
-		first_operand = stack.top;
-		rule_for_code_gen = check_rule(count, first_operand, NULL, NULL);
+		first_operand = stack_exp.top;
+		generation_rule = check_Rule(count, first_operand, NULL, NULL, data);
 	}
 	else if (count == 3 && stop)
 	{
-		first_operand = stack.top->next->next;
-		second_operand = stack.top->next;
-		third_operand = stack.top;
+		first_operand = stack_exp.top->next->next;
+		second_operand = stack_exp.top->next;
+		third_operand = stack_exp.top;
 
-		generation_rule = check_rule (count, first_operand, second_operand, third_operand);
+		generation_rule = check_Rule (count, first_operand, second_operand, third_operand, data);
 	}
 	else
 	{
 		return error_syntax;
 	}
-	
-	if (generation_rule == RULE_NOT_DEFINED)
-	{
-		return error_syntax;
+
+	if (generation_rule != RULE_NOT_DEFINED)
+    {
+		if ((return_of_function = semantic_test (generation_rule, first_operand, second_operand, third_operand, &type_of_result,data)))
+		{
+			return return_of_function;
+		}
+
+        if (generation_rule == RULE_PLUS && type_of_result == DATA_TYPE_STRING)
+        {
+            Gen_string_concat ();
+            //printf("GENERATION : Performing concatenation!\n");
+        } else{
+
+                Gen_expr_calc (generation_rule);
+                //printf("GENERATION : Performing generation by the rule!\n");
+
+
+        }
+
+        Expression_stack_count_of_pop(&stack_exp, count + 1);
+        Expression_stack_push(&stack_exp, SYMBOL_NOT_DEFINED, type_of_result);
 	}
 	else
-	{
-		if ((result = test_semantics (rule_for_code_gen, first_operand, second_operand, third_operand, &type)))
-		{
-			return result;
-		}
+    {
+       return error_syntax;
+    }
 
-		if (rule_for_code_gen == RULE_PLUS && final_type == DATA_TYPE_STRING)
-		{
-//			GENERATE_CODE(generate_concat_stack_strings);
-		}
-		else
-		{ 
-//			GENERATE_CODE(generate_stack_operation, rule_for_code_gen);
-		}
+	return return_of_function;
+}
 
-		symbol_stack_pop_count(&stack, count + 1);
-		symbol_stack_push(&stack, NON_TERM, final_type);
-	}
+/** Function for
+ *
+ *  @param -
+ *  @return -
+ ***/
 
-	return SYNTAX_OK;
+char* i2s (int number)
+{
+    static char buffer[20];
+    snprintf(buffer, 20, "%d", number);
+    return buffer;
 }
 
 
-int expression(PData* data)
+
+int expression(Parser_data* data)
 {
-	int return_for_analysis = error_syntax;
+    Expression_stack_init(&stack_exp);  // inicializacia stacku pre vyrazy
+    Expression_stack_push(&stack_exp, SYMBOL_DOLLAR, DATA_TYPE_NOT_DEFINED); // vlozenie $ na stack top kvoli precedencnemu algoritmu
 
-	symbol_stack_init(&Stack);
+    Expression_stack_entry* ter_on_stack_top;  // deklaracia ukazovatela na ter na stack tope
+	Symbol_enumeration actual_symbol;  // deklaracia aktualneho symbolu z vyrazu
 
-	if (!symbol_stack_push(&stack, DOLLAR, DATA_TYPE_NOT_DEFINED))
+	int return_for_analysis = 0;    // konecne navratova hodnota vyrazov
+
+	for (int condition = 0; condition == 0;) // loop pre precedencni algoritmus
 	{
-		FREE_RESOURCES_RETURN(error_internal);
+		actual_symbol = get_Symbol(&data->token);  // zistime, aky je symbol poslany z analyzy
+
+        ter_on_stack_top = Expression_stack_top_ter(&stack_exp); //pozrie ter na top stacku, ci to nie je STOP symbol
+
+        if (ter_on_stack_top == NULL) // nie je ziadnu ter na vrchu stacku
+        {
+            Expression_stack_free(&stack_exp);
+        }
+		else if (ter_on_stack_top->symbol == SYMBOL_IDENTIFIER) // ak ter je identifikator, tak pozrie ci v tabulke uz nie je v globalnej tabulke
+        {
+            TData* variable = sym_table_search(&data->global_table, data->token.attribute.s->string);
+            ter_on_stack_top->data_type = variable->type;
+        }
+
+		int INDEX = precedence_table[get_Index(ter_on_stack_top->symbol)][get_Index(actual_symbol)]; //ziskam indexy actual symbol a stack top, dosadim ich do pola tabulky ako suradnice
+
+		if (INDEX == SFT)
+		{
+			int result1 = Expression_stack_insert_after_top_ter(&stack_exp, SYMBOL_STOP, DATA_TYPE_NOT_DEFINED); // dosadim si stop symbol, ktoy nahradzuje < v precedencnej analyze
+			int result2 = Expression_stack_push(&stack_exp, actual_symbol, get_data_Type(&data->token, data)); // najprv ziskame data type prveho tokenu,
+
+			if(!(result1 || result2)) // ak je aspon jedno z nich pravda, vyhodi error
+            {
+                Expression_stack_free(&stack_exp);
+                return error_internal;
+            }
+
+            if (actual_symbol == SYMBOL_IDENTIFIER || actual_symbol == SYMBOL_INTEGER || actual_symbol == SYMBOL_FLOAT || actual_symbol == SYMBOL_STRING)
+            {
+                if (actual_symbol == SYMBOL_IDENTIFIER)
+                {
+                    if (sym_table_search(&data->local_table, data->token.attribute.s->string) != NULL) {
+                        Gen_push_stack_op (Term_adjustment(data->token.attribute.s->string,4));
+                    } else if (sym_table_search(&data->global_table, data->token.attribute.s->string) != NULL) {
+                        Gen_push_stack_op (Term_adjustment(data->token.attribute.s->string,3));
+                    } else {
+                        //error;
+                    }
+                }
+                else if (actual_symbol == SYMBOL_INTEGER)
+                {
+                    Gen_push_stack_op (Term_adjustment(data->token.attribute.s->string,0));
+                }
+                else if (actual_symbol == SYMBOL_FLOAT)
+                {
+                    Gen_push_stack_op (Term_adjustment(data->token.attribute.s->string,1));
+                }
+                else
+                {
+                    Gen_push_stack_op (Term_adjustment(data->token.attribute.s->string,5));
+                }
+
+                //printf("GENERATION: Pushning token!\n");
+            }
+
+            return_for_analysis = get_token(&data->token, NULL); // ziskanie dalsieho tokenu
+
+            if(return_for_analysis)
+            {
+                Expression_stack_free(&stack_exp);
+                return return_for_analysis;
+            }
+		}
+        else if (INDEX == RED) // zredukovanie vyrazu pomocou daneho pravidla
+        {
+            return_for_analysis = reduce_by_rule(data);
+            if (return_for_analysis)
+            {
+              Expression_stack_free(&stack_exp);
+              return return_for_analysis;
+            }
+        }
+        else if (INDEX == MCH)  // pravidlo, ked ostala len prava a lava zatvorka
+        {
+            Expression_stack_push(&stack_exp, actual_symbol, get_data_Type(&data->token, data));
+
+            return_for_analysis = get_token(&data->token, NULL);
+
+            if(return_for_analysis)
+            {
+                Expression_stack_free(&stack_exp);
+                return return_for_analysis;
+            }
+        }
+        else if (INDEX == ERR) // ostali nam iba znaky $
+        {
+            if (ter_on_stack_top->symbol == SYMBOL_DOLLAR && actual_symbol == SYMBOL_DOLLAR)
+            {
+                condition = 1; // spravne ukoncenie funkcie
+            }
+            else
+            {
+                Expression_stack_free(&stack_exp);
+                return error_syntax;
+            }
+        }
 	}
 
-	Symbol_stack_item* stack_top;
-	Symbol_enumeration actual_symbol;
+    Expression_stack_entry* final_non_ter = Expression_stack_top(&stack_exp);
 
+	char *frame = "GF";
 
-	for (int condition = 0; condition == 0;)
-	{
-		actual_symbol = get_symbol_from_token(&data->token);
-		stack_top = symbol_stack_top_terminal(&stack);
+    if (final_non_ter == NULL)
+    {
+        Expression_stack_free(&stack_exp);
+        return error_internal;
+    }
 
-		if (stack_top == NULL)
-		{
-			FREE_RESOURCES_RETURN(error_internal); 
-		}
-	
-		if (precedence_table[get_index(stack_top->symbol)][get_index(actual_symbol)] == ERROR)
-		{
-			if (stack_top->symbol != DOLLAR || actual_symbol != DOLLAR)
-			{
-					FREE_RESOURCES_RETURN(error_syntax);	
-			}
-			else
-			{
-				condition = 1;
-			}
-		}
-		else if (precedence_table[get_index(stack_top->symbol)][get_index(actual_symbol)] == MATCH)
-		{
-			symbol_stack_push(&stack, actual_symbol, get_data_type(&data->token, data));
+    if (final_non_ter->symbol != SYMBOL_NOT_DEFINED)
+    {
+        Expression_stack_free(&stack_exp);
+        return error_internal;
+    }
 
-			if ((return_for_analysis = get_next_token(&data->token)))
-			{
-				FREE_RESOURCES_RETURN(return_for_analysis);
-			}
-		}
-		else if (precedence_table[get_index(top_stack_terminal->symbol)][get_index(actual_symbol)] == REDUC)
-		{
-			if ((return_for_analysis = reduce_by_rule(data)))
-			{
-				FREE_RESOURCES_RETURN(return_for_analysis);
-			}
-		}
-		else if (precedence_table[get_index(stack_top->symbol)][get_index(actual_symbol)] == SHIFT)
-		{
-			if (!symbol_stack_insert_after_top_terminal(&stack, SYMBOL_STOP, DATA_TYPE_NOT_DEFINED))
-			{
-				FREE_RESOURCES_RETURN(error_internal);
-			}
+    data->left_side_id->type = final_non_ter->data_type;
+  //  Gen_save_expr_or_retval(data->left_side_id->identifier);
 
-			if(!symbol_stack_push(&stack, actual_symbol, get_type(&data->token, data)))
-			{
-				FREE_RESOURCES_RETURN(error_internal);
-			}
-
-			if (actual_symbol == SYMBOL_IDENTIFIER || actual_symbol == SYMBOL_INTEGER || actual_symbol == SYMBOL_FLOAT || actual_symbol == SYMBOL_STRING)
-			{
-//				GENERATE_CODE(generate_push, data->token);
-			}
-
-			if ((return_for_analysis = get_token(&data->token)))
-			{
-				FREE_RESOURCES_RETURN(return_for_analysis);
-			}
-		}
-	}
-
-	Symbol_stack_item* final_non_terminal = symbol_stack_top(&stack);
-
-	if (final_non_terminal == NULL)
-	{
-		FREE_RESOURCES_RETURN(error_internal);
-	}
-
-	if (final_non_terminal->symbol != SYMBOL_NOT_DEFINED)
-	{
-		FREE_RESOURCES_RETURN(error_internal);
-	}
-
-	if (data->lhs_id != NULL)
-	{
-		char *frame = "LF";
-		
-		if (data->lhs_id->global) 
-		{
-			frame = "GF";
-		}
-		
-		if (data->lhs_id->type == TYPE_INT)
-		{
-			if (final_non_terminal->data_type == DATA_TYPE_STRING)
-			{
-				FREE_RESOURCES_RETURN(error_semantic_compatibility);
-			}
-			
-//			GENERATE_CODE(generate_save_expression_result, data->lhs_id->identifier, final_non_terminal->data_type, DATA_TYPE_INT, frame);
-		}
-		else if (data->lhs_id->global ==  DATA_TYPE_FLOAT)
-		{
-			if (final_non_terminal->data_type == DATA_TYPE_STRING)
-			{
-				FREE_RESOURCES_RETURN(error_semantic_compability);
-			}
-		
-//			GENERATE_CODE(generate_save_expression_result, data->lhs_id->identifier, final_non_terminal->data_type, DATA_TYPE_FLOAT, frame);
-		}
-		else if (data->lhs_id->type == DATA_TYPE_STRING)
-		{
-			if (final_non_terminal->data_type != DATA_TYPE_STRING)
-			{
-				FREE_RESOURCES_RETURN(semantic_compability);
-			}
-		
-//			GENERATE_CODE (generate_save_expression_result, data->lhs_id->identifier, DATA_TYPE_STRING, DATA_TYPE_STRING, frame);
-		}
-		else if (data->lhs_id->type == DATA_TYPE_NOT_DEFINED)
-		{
-//			GENERATE_CODE (generate_save_expression_result, data->lhs_id->identifier, final_non_terminal->data_type, DATA_TYPE_NOT_DEFINED, frame);
-		}
-	}
-	FREE_RESOURCES_RETURN(semantic_syntax_accepted);	
+    Expression_stack_free(&stack_exp);
+    return 0;
 }

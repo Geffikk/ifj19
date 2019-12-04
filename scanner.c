@@ -154,6 +154,10 @@ static int isFloat(Lexem_string *string, Token *token)
     {
         return free_source(error_internal, string);
     }
+    if(!copy_lexem_string_to_attribute_string(string, token->attribute.s))
+    {
+        return free_source(error_internal, string);
+    }
     token->attribute.float_number = value;
      */
     if(!copy_lexem_string_to_attribute_string(string, token->attribute.s))

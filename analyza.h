@@ -1,6 +1,7 @@
-//
-// Created by patres on 25. 10. 2019.
-//
+
+/************************* ANALYZA *************************
+ * @author : Patrik Tomov <xtomov0200@stud.fit.vutbr.cz>
+***********************************************************/
 
 #ifndef IFJ_19_ANALYZA_H
 #define IFJ_19_ANALYZA_H
@@ -10,32 +11,42 @@
 #include "symtable.h"
 #include "scanner.h"
 
-//POMOCNE FUNKCIE
 
 
 
 
 typedef struct
 {
-    Sym_table global_table;		/// Global symbol table
-    Sym_table local_table;		/// Local symbol table
+    Sym_table global_table;
+    Sym_table local_table;
 
-    Token token;				/// Token
+    TData* current_process_id;
+    TData* left_side_id;
+    TData* right_side_id;
 
-    TData* current_id;			/// ID of currently processed function
-    TData* lhs_id;				/// ID of left-hand-side variable
-    TData* rhs_id;				/// ID of right-hand-side function (expression?)
+    Token token;
 
-    int param_index;		/// Index of currently checked param
-    int label_index;			/// Index for generating unique labels.
-    int label_deep;				/// Deep of labes.
+    int param_index;
 
-    bool in_function;			/// Defines if the parser is in function
-    //bool in_declaration;		/// Defines if param rule should add or check it's params
-    bool in_while_or_if;		/// Defines if the parser is in construction while, if or then
-    //bool non_declared_function;	/// Function that has been only defined
-} PData;
+    bool in_function;
+    bool in_while_or_if;
+    bool was_in_main;
 
+} Parser_data;
+
+// declaration of functions (rules)
+int prog_body(Parser_data* data); //definicie funkcii
+int main_body(Parser_data* data); //hlavne telo programu
+int end_main(Parser_data* data); // koniec hlavneho tela
+int par_list(Parser_data* data);  //spravovanie parametru ->
+int par_list2(Parser_data* data); // ak ich je viac
+int statement(Parser_data* data); //if, while, etc..
+int def_value(Parser_data* data); // id = <def_value>
+int arg_list(Parser_data* data); //argument pri volani funkcii ->
+int arg_list2(Parser_data* data); //ak ich je viac
+int value(Parser_data* data);
+int print_rule(Parser_data* data);
 int analyza();
+
 
 #endif //IFJ_19_ANALYZA_H

@@ -1,6 +1,9 @@
-//
-// Created by maros on 10/16/2019.
-//
+/************************ LEXEM_STRING *************************
+ * @author : Maros Geffert <xgeffe00@stud.fit.vutbr.cz>
+ * Subject : IFJ
+ * Project : Compiler implementation imperativ language IFJ
+ * @brief : Lexem_string header
+***********************************************************/
 
 #ifndef IFJ_LEXEM_STRING_H
 #define IFJ_LEXEM_STRING_H
