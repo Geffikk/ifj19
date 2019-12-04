@@ -13,8 +13,6 @@
 #include "code_generator.h"
 #include "lexem_string.h"
 
-Lexem_string IFJcode19;
-
 
 #define GEN_CHAR(code) \
 	if ( !add_char_to_lexem_string(&IFJcode19, code) ) return false
@@ -181,32 +179,32 @@ char* Term_adjustment (const char *term, const int data_type) {
 	static char new_term[1000]; // max + 7
 	
 	switch (data_type) {
-		case 1 :
+		case 0 :
 			strcpy(new_term, "int@");
 			strcat(new_term, term);
 			break;
 
-		case 2 :
+		case 1 :
 			strcpy(new_term, "float@");
 			strcat(new_term, term);
 			break;
 
-		case 3 :
+		case 2 :
 			strcpy(new_term, "nil@");
 			strcat(new_term, term);
 			break;
 
-		case 4 :
+		case 3 :
 			strcpy(new_term, "GF@");
 			strcat(new_term, term);
 			break;
 
-		case 5 :
+		case 4 :
 			strcpy(new_term, "LF@");
 			strcat(new_term, term);
 			break;
 			
-		case 6 :
+		case 5 :
 			strcpy(new_term, "string@");
 
 			char tmp_str[5];
@@ -279,7 +277,7 @@ char* Term_adjustment (const char *term, const int data_type) {
 	return new_term;
 }
 
-bool Gen_return (const char *term) {
+bool Gen_return () {
 
 	GEN_STRING("POPS LF@%retval");
 	GEN_CONST_STRING_AND_EOL("RETURN");

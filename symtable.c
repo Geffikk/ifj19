@@ -99,6 +99,8 @@ TData *sym_table_add_symbol(Sym_table *table, const char *key, bool* malloc_fail
 	new_entry->data.type = DATA_TYPE_NOT_DEFINED;
 	new_entry->data.defined = false;
 	new_entry->data.global = false;
+	new_entry->data.is_variable = false;
+	new_entry->data.is_function = false;
 	new_entry->next = NULL;
 
 	if (tmp_last == NULL)
@@ -137,6 +139,13 @@ bool sym_table_add_parameter(TData *data, int data_type)
 	else if(data_type == DATA_TYPE_STRING)
     {
         if (!add_char_to_lexem_string(data->params, 's'))
+        {
+            return false;
+        }
+    }
+    else if(data_type == DATA_TYPE_NOT_DEFINED)
+    {
+        if (!add_char_to_lexem_string(data->params, 'n'))
         {
             return false;
         }

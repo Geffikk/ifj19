@@ -4,7 +4,7 @@
  * Project : Compiler implementation imperativ language IFJ
  * @brief  : Expression
 ***********************************************************/
-
+#include <stdlib.h>
 #include "scanner.h"
 #include "expression.h"
 #include "error.h"
@@ -557,17 +557,17 @@ static int reduce_by_rule (Parser_data* data)
 		{
 			return return_of_function;
 		}
-        if (generation_rule != RULE_PLUS && type_of_result != DATA_TYPE_STRING)
-        {
-            Gen_expr_calc (generation_rule);
-            printf("GENERATION : Performing generation by the rule!\n");
-
-        }
 
         if (generation_rule == RULE_PLUS && type_of_result == DATA_TYPE_STRING)
         {
             Gen_string_concat ();
-            printf("GENERATION : Performing concatenation!\n");
+            //printf("GENERATION : Performing concatenation!\n");
+        } else{
+
+                Gen_expr_calc (generation_rule);
+                //printf("GENERATION : Performing generation by the rule!\n");
+
+
         }
 
         Expression_stack_count_of_pop(&stack_exp, count + 1);
@@ -586,40 +586,50 @@ static int reduce_by_rule (Parser_data* data)
  *  @param -
  *  @return -
  ***/
+
+char* i2s (int number)
+{
+    static char buffer[20];
+    snprintf(buffer, 20, "%d", number);
+    return buffer;
+}
+
+
+
 int expression(Parser_data* data)
 {
-    Expression_stack_init(&stack_exp);  // inicializacia stacku
-    Expression_stack_push(&stack_exp, SYMBOL_DOLLAR, DATA_TYPE_NOT_DEFINED); // vlozenie $ na stack top
+    Expression_stack_init(&stack_exp);  // inicializacia stacku pre vyrazy
+    Expression_stack_push(&stack_exp, SYMBOL_DOLLAR, DATA_TYPE_NOT_DEFINED); // vlozenie $ na stack top kvoli precedencnemu algoritmu
 
-    Expression_stack_entry* ter_on_stack_top;  // deklaracia ukazovatela na stack top
-	Symbol_enumeration actual_symbol;  // deklaracia aktualneho symbolu
+    Expression_stack_entry* ter_on_stack_top;  // deklaracia ukazovatela na ter na stack tope
+	Symbol_enumeration actual_symbol;  // deklaracia aktualneho symbolu z vyrazu
 
-	int return_for_analysis = 0;
+	int return_for_analysis = 0;    // konecne navratova hodnota vyrazov
 
-	for (int condition = 0; condition == 0;) // loop
+	for (int condition = 0; condition == 0;) // loop pre precedencni algoritmus
 	{
-		actual_symbol = get_Symbol(&data->token);  // zistime, aky je aktualny symbol od patresa
-		ter_on_stack_top = Expression_stack_top_ter(&stack_exp); //pozrie item na vrchu stacku, ci nie je STOP symbol
+		actual_symbol = get_Symbol(&data->token);  // zistime, aky je symbol poslany z analyzy
 
-        if (ter_on_stack_top == NULL)
+        ter_on_stack_top = Expression_stack_top_ter(&stack_exp); //pozrie ter na top stacku, ci to nie je STOP symbol
+
+        if (ter_on_stack_top == NULL) // nie je ziadnu ter na vrchu stacku
         {
             Expression_stack_free(&stack_exp);
         }
-		else if (ter_on_stack_top->symbol == SYMBOL_IDENTIFIER)
+		else if (ter_on_stack_top->symbol == SYMBOL_IDENTIFIER) // ak ter je identifikator, tak pozrie ci v tabulke uz nie je v globalnej tabulke
         {
             TData* variable = sym_table_search(&data->global_table, data->token.attribute.s->string);
             ter_on_stack_top->data_type = variable->type;
         }
 
-
 		int INDEX = precedence_table[get_Index(ter_on_stack_top->symbol)][get_Index(actual_symbol)]; //ziskam indexy actual symbol a stack top, dosadim ich do pola tabulky ako suradnice
 
 		if (INDEX == SFT)
 		{
-			int result1 = Expression_stack_insert_after_top_ter(&stack_exp, SYMBOL_STOP, DATA_TYPE_NOT_DEFINED); // dosadim si stop symbol
+			int result1 = Expression_stack_insert_after_top_ter(&stack_exp, SYMBOL_STOP, DATA_TYPE_NOT_DEFINED); // dosadim si stop symbol, ktoy nahradzuje < v precedencnej analyze
 			int result2 = Expression_stack_push(&stack_exp, actual_symbol, get_data_Type(&data->token, data)); // najprv ziskame data type prveho tokenu,
 
-			if(!(result1 || result2))
+			if(!(result1 || result2)) // ak je aspon jedno z nich pravda, vyhodi error
             {
                 Expression_stack_free(&stack_exp);
                 return error_internal;
@@ -627,11 +637,33 @@ int expression(Parser_data* data)
 
             if (actual_symbol == SYMBOL_IDENTIFIER || actual_symbol == SYMBOL_INTEGER || actual_symbol == SYMBOL_FLOAT || actual_symbol == SYMBOL_STRING)
             {
-                //Gen_push_stack_op ();
-                printf("GENERATION: Pushning token!\n");
+                if (actual_symbol == SYMBOL_IDENTIFIER)
+                {
+                    if (sym_table_search(&data->local_table, data->token.attribute.s->string) != NULL) {
+                        Gen_push_stack_op (Term_adjustment(data->token.attribute.s->string,4));
+                    } else if (sym_table_search(&data->global_table, data->token.attribute.s->string) != NULL) {
+                        Gen_push_stack_op (Term_adjustment(data->token.attribute.s->string,3));
+                    } else {
+                        //error;
+                    }
+                }
+                else if (actual_symbol == SYMBOL_INTEGER)
+                {
+                    Gen_push_stack_op (Term_adjustment(data->token.attribute.s->string,0));
+                }
+                else if (actual_symbol == SYMBOL_FLOAT)
+                {
+                    Gen_push_stack_op (Term_adjustment(data->token.attribute.s->string,1));
+                }
+                else
+                {
+                    Gen_push_stack_op (Term_adjustment(data->token.attribute.s->string,5));
+                }
+
+                //printf("GENERATION: Pushning token!\n");
             }
 
-            return_for_analysis = get_token(&data->token, NULL); // ziskanie dalsieho tokenu, pri prvom prejdeni +
+            return_for_analysis = get_token(&data->token, NULL); // ziskanie dalsieho tokenu
 
             if(return_for_analysis)
             {
@@ -639,7 +671,7 @@ int expression(Parser_data* data)
                 return return_for_analysis;
             }
 		}
-        else if (INDEX == RED) //zredukovanie vyrazu
+        else if (INDEX == RED) // zredukovanie vyrazu pomocou daneho pravidla
         {
             return_for_analysis = reduce_by_rule(data);
             if (return_for_analysis)
@@ -648,7 +680,7 @@ int expression(Parser_data* data)
               return return_for_analysis;
             }
         }
-        else if (INDEX == MCH)  // prava a lava zatvorka
+        else if (INDEX == MCH)  // pravidlo, ked ostala len prava a lava zatvorka
         {
             Expression_stack_push(&stack_exp, actual_symbol, get_data_Type(&data->token, data));
 
@@ -691,7 +723,7 @@ int expression(Parser_data* data)
     }
 
     data->left_side_id->type = final_non_ter->data_type;
-    Gen_save_expr_or_retval(data->left_side_id->identifier);
+  //  Gen_save_expr_or_retval(data->left_side_id->identifier);
 
     Expression_stack_free(&stack_exp);
     return 0;

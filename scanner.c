@@ -129,6 +129,11 @@ static int isInteger(Lexem_string *string, Token *token)
     token->attribute.int_number = val;
     token->type = token_type_int; // Set responsive token type
 
+    if(!copy_lexem_string_to_attribute_string(string, token->attribute.s))
+    {
+        return free_source(error_internal, string);
+    }
+
     return free_source(token_scan_accepted, string); // Return token scan was succes
 }
 
@@ -144,6 +149,10 @@ static int isFloat(Lexem_string *string, Token *token)
     char *endptr;
     float value = strtof(string->string, &endptr);
     if (*endptr)
+    {
+        return free_source(error_internal, string);
+    }
+    if(!copy_lexem_string_to_attribute_string(string, token->attribute.s))
     {
         return free_source(error_internal, string);
     }

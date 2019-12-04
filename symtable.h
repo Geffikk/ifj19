@@ -7,7 +7,7 @@
 #include "lexem_string.h"
 
 
-#define MAX_SYMTABLE_SIZE 20
+#define MAX_SYMTABLE_SIZE 50
 
 
 /**

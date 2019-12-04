@@ -10,10 +10,12 @@
 
 #include "expression.h"
 
+Lexem_string IFJcode19;
+
 bool Gen_Start ();
 bool Gen_Finish ();
 char* Term_adjustment (const char *term, const int data_type);
-bool Gen_return (const char *term);
+bool Gen_return ();
 bool Gen_cast_stack_op1 ();
 bool Gen_cast_stack_op2 ();
 bool Gen_push_stack_op (const char *term);

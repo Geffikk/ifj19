@@ -1,0 +1,4 @@
+def kkt(a, b):
+  c = 5
+
+d = kkt(4, 5)

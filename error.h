@@ -6,10 +6,10 @@
 #define IFJ_ERROR_H
 
 #define token_scan_accepted 0
-#define token_syntax_accepted 0
+#define good_expression_syntax 0
 #define error_lexical 1
 #define error_syntax 2
-#define error_semantic 3
+#define error_semantic 3 //not defined function or variable, redefinicia funkcie/premennej
 #define error_semantic_compatibility 4
 #define error_semantic_bad_count_param 5
 #define error_semantic_others 6
