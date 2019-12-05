@@ -2,8 +2,6 @@
 /***********************************************************
  * @author : Andrej Pavlovic <xpavlo14@stud.fit.vutbr.cz>
  * Subject : IFJ
- * Project : Compiler implementation imperativ language IFJ
- * @brief : Code generation
 ***********************************************************/
 
 #include <string.h>
@@ -11,7 +9,6 @@
 #include <stdlib.h>
 
 #include "code_generator.h"
-#include "lexem_string.h"
 
 
 #define GEN_CHAR(code) \
@@ -443,7 +440,7 @@ bool Gen_else_foot () {
 	static unsigned long int i = 0;
 
 	GEN_CONST_STRING_AND_EOL("# else foot");
-	GEN_STRING("JUMP ?_else_end_");
+	GEN_STRING("LABEL ?_else_end_");
 	GEN_INT(i); GEN_EOL();
 
 	i++;
