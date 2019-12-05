@@ -154,10 +154,6 @@ static int isFloat(Lexem_string *string, Token *token)
     {
         return free_source(error_internal, string);
     }
-    if(!copy_lexem_string_to_attribute_string(string, token->attribute.s))
-    {
-        return free_source(error_internal, string);
-    }
     token->attribute.float_number = value;
      */
     if(!copy_lexem_string_to_attribute_string(string, token->attribute.s))
@@ -286,9 +282,8 @@ int get_token(Token *token, tStack *stack) {
                 else if (c == '\n')
                 {
                     indentation_flag = true;
-                    //token->type = token_type_EOL;
-                    //return free_source(token_scan_accepted, str);
-                    state = state_start;
+                    token->type = token_type_EOL;
+                    return free_source(token_scan_accepted, str);
                 }
                 else if ((isspace(c)))
                 {
@@ -445,6 +440,14 @@ int get_token(Token *token, tStack *stack) {
                 else if (c == '"' && documentation_flag == true)
                 {
                     state = state_documentation_string_finish_first;
+                }
+                else if (documentation_flag == true)
+                {
+                    if(!add_char_to_lexem_string(str, c))
+                    {
+                        return free_source(error_internal, str);
+                    }
+                    state = state_comment;
                 }
                 break;
 
@@ -793,7 +796,7 @@ int get_token(Token *token, tStack *stack) {
                     {
                         stackTop(stack, &stack_top_char);
                     }
-                    if(indentation_count == stack_top_char || c == '#' || c == '"' || c == '\n')
+                    if(indentation_count == stack_top_char || c == '#' || c == '\n')
                     {
                         ungetc(c, source_file);
                         indentation_count = 0; // set counting lines on zero
@@ -895,8 +898,12 @@ int get_token(Token *token, tStack *stack) {
                 if (c == '"')
                 {
                     documentation_flag = false;
-                    free_source(token_scan_accepted, str);
-                    state = state_start;
+                    token->type = token_type_str;
+                    if(!copy_lexem_string_to_attribute_string(str, token->attribute.s))
+                    {
+                        return free_source(error_internal, str);
+                    }
+                    return free_source(token_scan_accepted, str);
                 }
                 else
                 {
