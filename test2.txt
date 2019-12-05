@@ -1,5 +1,0 @@
-def tisk(a, b):
-  print('maros je chuj')
-
-
-tisk(5, 6)
