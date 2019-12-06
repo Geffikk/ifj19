@@ -8,9 +8,11 @@
 
 #include <stdbool.h>
 
-#include "parser.h"
+#include "expression.h"
 
 Lexem_string IFJcode19;
+
+typedef enum {INT, FLOAT, NIL, GLOBAL, LOCAL, STRING} type;
 
 bool Gen_Start ();
 bool Gen_Finish ();
@@ -22,6 +24,7 @@ bool Gen_push_stack_op (const char *term);
 bool Gen_var_def (const char *var_id);
 bool Gen_save_expr_or_retval (const char *var_id);
 bool Gen_string_concat ();
+bool Gen_type_control (const char *term1, const char *term2);
 bool Gen_expr_calc (Rule_enumeration rule);
 bool Gen_if_head ();
 bool Gen_else_head ();

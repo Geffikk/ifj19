@@ -2,6 +2,8 @@
 /***********************************************************
  * @author : Andrej Pavlovic <xpavlo14@stud.fit.vutbr.cz>
  * Subject : IFJ
+ * Project : Compiler implementation imperativ language IFJ
+ * @brief : Code generation
 ***********************************************************/
 
 #include <string.h>
@@ -9,6 +11,7 @@
 #include <stdlib.h>
 
 #include "code_generator.h"
+#include "lexem_string.h"
 
 
 #define GEN_CHAR(code) \
@@ -171,37 +174,39 @@ bool Gen_Finish () {
 	return true;
 }
 
-char* Term_adjustment (const char *term, const int data_type) {
+char* Term_adjustment (const char *term, const int type) {
 
 	static char new_term[1000]; // max + 7
 	
-	switch (data_type) {
-		case 0 :
+	switch (type) {
+		case INT :
 			strcpy(new_term, "int@");
 			strcat(new_term, term);
 			break;
 
-		case 1 :
+		case FLOAT : 0; // label can be followed only by statement (declaration != statement)
+			char tmp[1000];
 			strcpy(new_term, "float@");
-			strcat(new_term, term);
+			sprintf(tmp, "%a", strtod(term, NULL));
+			strcat(new_term, tmp);
 			break;
 
-		case 2 :
+		case NIL :
 			strcpy(new_term, "nil@");
 			strcat(new_term, term);
 			break;
 
-		case 3 :
+		case GLOBAL :
 			strcpy(new_term, "GF@");
 			strcat(new_term, term);
 			break;
 
-		case 4 :
+		case LOCAL :
 			strcpy(new_term, "LF@");
 			strcat(new_term, term);
 			break;
 			
-		case 5 :
+		case STRING :
 			strcpy(new_term, "string@");
 
 			char tmp_str[5];
@@ -329,6 +334,28 @@ bool Gen_string_concat () {
 	GEN_CONST_STRING_AND_EOL("POPS GF@tmp2");
 	GEN_CONST_STRING_AND_EOL("CONCAT GF@tmp2 GF@tmp2 GF@tmp1");
 	GEN_CONST_STRING_AND_EOL("PUSHS GF@tmp2");
+
+	return true;
+}
+
+bool Gen_type_control (const char *term1, const char *term2) {
+
+	static unsigned long int i = 0;
+
+	GEN_CONST_STRING_AND_EOL("# type control");
+	GEN_STRING("TYPE GF@%tmp1 ");
+	GEN_STRING(term1); GEN_EOL();
+	GEN_STRING("TYPE GF@%tmp2 ");
+	GEN_STRING(term2); GEN_EOL();
+	GEN_CONST_STRING_AND_EOL("EQ GF@%tmp1 GF@%tmp1 GF@%tmp2");
+	GEN_STRING("JUMPIFEQ ?_type_");
+	GEN_INT(i);
+	GEN_CONST_STRING_AND_EOL(" GF@%tmp1 bool@true");
+	GEN_CONST_STRING_AND_EOL("EXIT int@4");
+	GEN_CONST_STRING_AND_EOL("LABEL ?_type_");
+	GEN_INT(i); GEN_EOL();
+
+	i++;
 
 	return true;
 }

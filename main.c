@@ -11,7 +11,11 @@
 int main()
 {
     FILE* source_file;
+<<<<<<< HEAD
     /* source_file = fopen("/home/patres/CLionProjects/IFJ_2019/test1.txt", "r");
+=======
+    source_file = fopen("/home/patres/CLionProjects/IFJ_2019/test1.txt", "r");
+>>>>>>> master
     if (source_file == NULL){
         return -1;
     } 
