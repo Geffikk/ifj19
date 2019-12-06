@@ -1,6 +1,3 @@
-//
-// Created by maros on 11/18/2019.
-//
 
 #ifndef IFJ_ERROR_H
 #define IFJ_ERROR_H

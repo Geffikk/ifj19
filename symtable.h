@@ -10,95 +10,80 @@
 #define MAX_SYMTABLE_SIZE 50
 
 
-/**
- * @enum Data types.
- */
+/** Type of DATA_TYPE **/
 typedef enum
 {
-	DATA_TYPE_NOT_DEFINED,	/// Data type undefined
-	DATA_TYPE_INTEGER,		/// Integer data type
-	DATA_TYPE_FLOAT,	/// Float data type
-	DATA_TYPE_STRING,	/// String data type
+	DATA_TYPE_NOT_DEFINED,
+	DATA_TYPE_INTEGER,
+	DATA_TYPE_FLOAT,
+	DATA_TYPE_STRING,
 } Data_type;
 
-/**
- * @struct Item data representation.
- */
+
+/** Representation of item **/
 typedef struct
 {
-	Data_type type;			/// Data type of symbol / return type of function
-	bool defined;			/// Defined if current function was defined
-	Lexem_string *params;   /// parameters in string form
-	char *identifier;		/// Data identifier (key).
-	bool global;			/// Global (internal) variable.
-	bool is_function;
-	bool is_variable;
+	Data_type type;		  // Data type of symbol / return type of function
+	bool defined;		  // Defined if current function or variable was defined
+	Lexem_string *params; // parameters in string
+	char *identifier;	  // Data identifier(key)
+	bool global;		  // Global or local variable.
+	bool is_function;     // Is function
+	bool is_variable;     // Is variable
 } TData;
 
-/**
- * @struct Symbol table item representation.
- */
+
+/** Representation of item in table **/
 typedef struct htab_list_entry
 {
-	char *key; /// identifier
-	TData data; /// data
-	struct htab_list_entry *next; /// ptr to next item
+	char *key;                       // identifier
+	TData data;                      // data
+	struct htab_list_entry *next;    // pointer to next item
 } Sym_table_entry;
 
-// Symbol table
+/** Symbol table **/
 typedef Sym_table_entry* Sym_table[MAX_SYMTABLE_SIZE];
 
 
-/**
- * Initialisation of symbol table.
+/** Incialization of table
  *
- * @param table Pointer to table.
+ * @param table - is pointer to table
  */
 void sym_table_init(Sym_table *table);
 
-/**
- * Appends item to symbol table of.
+
+/** Function adds item to table
  *
- * @param table Pointer to table.
- * @param key Identifier of function or variable.
- * @param alloc_success True if allocation failed, otherwise true. 
- * @return Returns NULL if error or item is existing else returns pointer to added item.
+ * @param table - is pointer to table
+ * @param key - is pointer to key
+ * @return null if error or item is existing, otherwise pointer to added item
  */
+
+
 TData *sym_table_add_symbol(Sym_table *table, const char *key, bool* malloc_failed);
 
-/**
- * Function appends parameter to symbol.
+/** Function adds parameter to function
  *
- * @param token Pointer to output token.
- * @param data_type Data type of parameter of function.
- * @return Returns true if adding was succesfull else returns false.
+ * @param data - is pointer to data of function
+ * @param data_type - is type of parameter to add
+ * @return true if parameter was successfully added, otherwise, false
  */
 bool sym_table_add_parameter(TData *data, int data_type);
 
-/**
- * Function finds symbol and renturns its data.
+
+/** Function finds symbol and return its data
  *
- * @param table Pointer to table.
- * @param key Identifier of function or variable.
- * @return NULL if symbol is not existing or pointer to data of symbol if it was successfuly found.
+ * @param table - is pointer to table
+ * @param key - is pointer to key
+ * @return null if identifier(key) was not found or pointer to data of symbol if was found
  */
 TData *sym_table_search(Sym_table *table, const char *key);
 
-/**
- * Function removes symbol.
- *
- * @param table Pointer to table.
- * @param key Identifier of function or variable.
- * @return Returns true if removal was successfull esle returns false.
- */
-bool sym_table_remove_symbol(Sym_table *table, const char *key);
 
-/**
- * Function frees all used resources for symbol table.
+/** Free all variables from table
  *
- * @param table Pointer to table.
+ * @param table - pointer to table
  */
 void sym_table_free(Sym_table *table);
-
 
 #endif //_SYMTABLE_H
