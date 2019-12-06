@@ -1,0 +1,11 @@
+#comment
+n = 2
+if n < 2: #comment
+   #comment
+   a = 2
+   #comment
+#comment
+else: #comment
+#comment
+   #comment
+   b = 3

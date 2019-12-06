@@ -1,0 +1,6 @@
+def kkt():
+    a=5
+    if a<2:
+        print()
+    else:
+        print()
