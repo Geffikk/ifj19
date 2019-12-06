@@ -1,0 +1,12 @@
+#Toto je koment
+
+p = 54
+a = p
+b = 2
+if a > 1: #Je kkt
+   a = b + 2
+else:
+   a = 0
+
+
+return a

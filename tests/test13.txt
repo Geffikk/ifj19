@@ -1,0 +1,3 @@
+string = ' Tomas \n \t \xA '
+string1 = 'Andrej  \' \" \xAA '
+string2 = '\t \" \x2A \xaa Patrik'

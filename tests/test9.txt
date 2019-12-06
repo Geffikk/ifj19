@@ -1,0 +1,2 @@
+string = ''
+string1 = ' /xbc /xBB /xF1 '

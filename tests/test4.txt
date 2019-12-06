@@ -1,1 +1,7 @@
-145.74E+45
+a = 4
+a = 4 + 4
+def factorial():
+ facebook = 4
+ facebook = 8
+
+b = 8
