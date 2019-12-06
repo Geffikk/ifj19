@@ -8,11 +8,9 @@
 
 #include <stdbool.h>
 
-#include "expression.h"
+#include "parser.h"
 
 Lexem_string IFJcode19;
-
-typedef enum {INT, FLOAT, NIL, GLOBAL, LOCAL, STRING} type;
 
 bool Gen_Start ();
 bool Gen_Finish ();

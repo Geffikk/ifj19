@@ -2,8 +2,6 @@
 /******************* INDENTATION STACK *********************
  * @author : Maros Geffert <xgeffe00@stud.fit.vutbr.cz>
  * Subject : IFJ
- * Project : Compiler implementation imperativ language IFJ
- * @brief : Indentation stack
 ***********************************************************/
 
 #include "stack.h"

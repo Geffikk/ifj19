@@ -2,8 +2,6 @@
 /***********************************************************
  * @author : Andrej Pavlovic <xpavlo14@stud.fit.vutbr.cz>
  * Subject : IFJ
- * Project : Compiler implementation imperativ language IFJ
- * @brief : Code generation
 ***********************************************************/
 
 #include <string.h>
@@ -11,7 +9,6 @@
 #include <stdlib.h>
 
 #include "code_generator.h"
-#include "lexem_string.h"
 
 
 #define GEN_CHAR(code) \
@@ -174,39 +171,37 @@ bool Gen_Finish () {
 	return true;
 }
 
-char* Term_adjustment (const char *term, const int type) {
+char* Term_adjustment (const char *term, const int data_type) {
 
 	static char new_term[1000]; // max + 7
 	
-	switch (type) {
-		case INT :
+	switch (data_type) {
+		case 0 :
 			strcpy(new_term, "int@");
 			strcat(new_term, term);
 			break;
 
-		case FLOAT : 0; // label can be followed only by statement (declaration != statement)
-			char tmp[1000];
+		case 1 :
 			strcpy(new_term, "float@");
-			sprintf(tmp, "%a", strtod(term, NULL));
-			strcat(new_term, tmp);
+			strcat(new_term, term);
 			break;
 
-		case NIL :
+		case 2 :
 			strcpy(new_term, "nil@");
 			strcat(new_term, term);
 			break;
 
-		case GLOBAL :
+		case 3 :
 			strcpy(new_term, "GF@");
 			strcat(new_term, term);
 			break;
 
-		case LOCAL :
+		case 4 :
 			strcpy(new_term, "LF@");
 			strcat(new_term, term);
 			break;
 			
-		case STRING :
+		case 5 :
 			strcpy(new_term, "string@");
 
 			char tmp_str[5];
@@ -338,26 +333,27 @@ bool Gen_string_concat () {
 	return true;
 }
 
-bool Gen_type_control (const char *term1, const char *term2) {
+bool Gen_type_control (const char *term1, const char *term2)
+{
 
-	static unsigned long int i = 0;
+    static unsigned long int i = 0;
 
-	GEN_CONST_STRING_AND_EOL("# type control");
-	GEN_STRING("TYPE GF@%tmp1 ");
-	GEN_STRING(term1); GEN_EOL();
-	GEN_STRING("TYPE GF@%tmp2 ");
-	GEN_STRING(term2); GEN_EOL();
-	GEN_CONST_STRING_AND_EOL("EQ GF@%tmp1 GF@%tmp1 GF@%tmp2");
-	GEN_STRING("JUMPIFEQ ?_type_");
-	GEN_INT(i);
-	GEN_CONST_STRING_AND_EOL(" GF@%tmp1 bool@true");
-	GEN_CONST_STRING_AND_EOL("EXIT int@4");
-	GEN_CONST_STRING_AND_EOL("LABEL ?_type_");
-	GEN_INT(i); GEN_EOL();
+    GEN_CONST_STRING_AND_EOL("# type control");
+    GEN_STRING("TYPE GF@%tmp1 ");
+    GEN_STRING(term1); GEN_EOL();
+    GEN_STRING("TYPE GF@%tmp2 ");
+    GEN_STRING(term2); GEN_EOL();
+    GEN_CONST_STRING_AND_EOL("EQ GF@%tmp1 GF@%tmp1 GF@%tmp2");
+    GEN_STRING("JUMPIFEQ ?_type_");
+    GEN_INT(i);
+    GEN_CONST_STRING_AND_EOL(" GF@%tmp1 bool@true");
+    GEN_CONST_STRING_AND_EOL("EXIT int@4");
+    GEN_CONST_STRING_AND_EOL("LABEL ?_type_");
+    GEN_INT(i); GEN_EOL();
 
-	i++;
+    i++;
 
-	return true;
+    return true;
 }
 
 bool Gen_expr_calc (Rule_enumeration rule) {

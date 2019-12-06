@@ -1,7 +1,7 @@
 
 /************************* Syntactic and semantic analisis *************************
  * @author : Patrik Tomov <xtomov02@stud.fit.vutbr.cz>
- * @author : Martin Valach <xvalac02@stud.fit.vutbr.cz>
+ * @author : Martin Valach <xvalac12@stud.fit.vutbr.cz>
 ***********************************************************/
 
 #include <stdlib.h>
@@ -407,7 +407,14 @@ int semantic_test (Rule_enumeration rule, Expression_stack_entry* first_operand,
     {
         if (first_operand->data_type == DATA_TYPE_NOT_DEFINED || third_operand->data_type == DATA_TYPE_NOT_DEFINED)
         {
-            return (error_semantic_compatibility);   //error4
+            if(data->in_function == true)
+            {
+                Gen_type_control(Term_adjustment(data->right_side_id->identifier,4),Term_adjustment(data->token.attribute.s->string,4));
+            }
+            else
+            {
+                return (error_semantic_compatibility);   //error4
+            }
         }
         if (rule == RULE_DIVIDE  || rule == RULE_DIVIDE_INT)
         {
@@ -455,11 +462,6 @@ int semantic_test (Rule_enumeration rule, Expression_stack_entry* first_operand,
             }
             else if (first_operand->data_type == DATA_TYPE_FLOAT || third_operand->data_type == DATA_TYPE_INTEGER) {
                 third_operand_to_float = true;
-            }
-            else
-            {
-                // pravdepodobne zbytocna podmienka
-                return error_semantic_compatibility;
             }
         }
     }
@@ -654,14 +656,24 @@ int expression(Parser_data* data)
         }
         else if (ter_on_stack_top->symbol == SYMBOL_IDENTIFIER) // ak ter je identifikator, tak pozrie ci v tabulke uz nie je v globalnej tabulke
         {
-            if(data->in_function == true)
-            {
-                TData* variable = sym_table_search(&data->local_table, data->token.attribute.s->string);
-                ter_on_stack_top->data_type = variable->type;
+            if (data->in_function == true) {
+                TData *variable = sym_table_search(&data->local_table, data->token.attribute.s->string);
+                if (variable != NULL)
+                {
+                    ter_on_stack_top->data_type = variable->type;
+                }
             }
-            else{
-                TData* variable = sym_table_search(&data->global_table, data->token.attribute.s->string);
-                ter_on_stack_top->data_type = variable->type;
+            else
+            {
+                TData *variable = sym_table_search(&data->global_table, data->token.attribute.s->string);
+                if (variable != NULL)
+                {
+                    ter_on_stack_top->data_type = variable->type;
+                }
+                else
+                {
+                    return error_semantic;
+                }
             }
         }
 
