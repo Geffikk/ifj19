@@ -8,7 +8,7 @@
 
 #include <stdbool.h>
 
-#include "expression.h"
+#include "parser.h"
 
 Lexem_string IFJcode19;
 
