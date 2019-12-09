@@ -9,11 +9,11 @@
 #include "parser.h"
 #include "expression_stack.h"
 #include "code_generator.h"
-
+#include "stack.h"
 
 tStack *stack; // zasobnik na indenty/dedenty
 Expression_stack stack_exp; // zasobnik pre vyrazy
-
+tStack_Param *stack_param;
 
 //MACROS FOR BETTER CLARITY
 #define MACRO_GET_TOKEN()  if((result = get_token(&data->token, stack)) != token_scan_accepted) {   \
@@ -54,25 +54,37 @@ Expression_stack stack_exp; // zasobnik pre vyrazy
                             || (token).type == token_type_str    \
                             || (token).type == token_type_identifier
 
-
+/// Pomocna funckcia na nacitavanie prazdnych riadkov
+int processing_EOLs(Parser_data* data)
+{
+    int result;
+    while(data->token.type == token_type_EOL)
+    {
+        if(data->token.type == token_type_EOL)
+        {
+            MACRO_CHECK_TYPE(token_type_EOL);
+        }
+        MACRO_GET_TOKEN();
+    }
+}
 
 int precedence_table[12][12] =
 {
 //                               INPUT TOKEN
 //<--------------------------------------------------------------->
 //            | == | != | <= | >= | <  | >  |+,- |*/,//| ) | (  |data|  $ |
-/* =  */  {ERR, ERR, ERR, ERR, ERR, ERR, SFT, SFT, RED, SFT, SFT, RED},  // =
-/* != */  {ERR, ERR, ERR, ERR, ERR, ERR, SFT, SFT, RED, SFT, SFT, RED},  // !=
-/* <= */  {ERR, ERR, ERR, ERR, ERR, ERR, SFT, SFT, RED, SFT, SFT, RED},  // <=
-/* >= */  {ERR, ERR, ERR, ERR, ERR, ERR, SFT, SFT, RED, SFT, SFT, RED},  // >=
-/* <  */  {ERR, ERR, ERR, ERR, ERR, ERR, SFT, SFT, RED, SFT, SFT, RED},  // <
-/* > */   {ERR, ERR, ERR, ERR, ERR, ERR, SFT, SFT, RED, SFT, SFT, RED},  // >
-/* +- */  {RED, RED, RED, RED, RED, RED, RED, SFT, RED, SFT, SFT, RED},  // +, -
-/* */     {RED, RED, RED, RED, RED, RED, RED, RED, RED, SFT, SFT, RED},  // *,/,//
-/* |*/    {RED, RED, RED, RED, RED, RED, RED, RED, RED, ERR, ERR, RED},  // )
-/* |*/    {SFT, SFT, SFT, SFT, SFT, SFT, SFT, SFT, MCH, SFT, SFT, ERR},  // (
-/* |*/    {RED, RED, RED, RED, RED, RED, RED, RED, RED, ERR, ERR, RED},  // data
-/* E|*/   {SFT, SFT, SFT, SFT, SFT, SFT, SFT, SFT, ERR, SFT, SFT, ERR}   // $
+/* =  */  {END, END, END, END, END, END, LSS, LSS, GRT, LSS, LSS, GRT},  // =
+/* != */  {END, END, END, END, END, END, LSS, LSS, GRT, LSS, LSS, GRT},  // !=
+/* <= */  {END, END, END, END, END, END, LSS, LSS, GRT, LSS, LSS, GRT},  // <=
+/* >= */  {END, END, END, END, END, END, LSS, LSS, GRT, LSS, LSS, GRT},  // >=
+/* <  */  {END, END, END, END, END, END, LSS, LSS, GRT, LSS, LSS, GRT},  // <
+/* > */   {END, END, END, END, END, END, LSS, LSS, GRT, LSS, LSS, GRT},  // >
+/* +- */  {GRT, GRT, GRT, GRT, GRT, GRT, GRT, LSS, GRT, LSS, LSS, GRT},  // +, -
+/* */     {GRT, GRT, GRT, GRT, GRT, GRT, GRT, GRT, GRT, LSS, LSS, GRT},  // *,/,//
+/* |*/    {GRT, GRT, GRT, GRT, GRT, GRT, GRT, GRT, GRT, END, END, GRT},  // )
+/* |*/    {LSS, LSS, LSS, LSS, LSS, LSS, LSS, LSS, MCH, LSS, LSS, END},  // (
+/* |*/    {GRT, GRT, GRT, GRT, GRT, GRT, GRT, GRT, GRT, END, END, GRT},  // data
+/* E|*/   {LSS, LSS, LSS, LSS, LSS, LSS, LSS, LSS, END, LSS, LSS, END}   // $
 };
 
 /** Function for transforming symbol to index
@@ -122,7 +134,7 @@ static Index_enumeration get_Index(Symbol_enumeration symbol) // priradi index z
     {
         return INDEX_LEFT_BRACKET;
     }
-    else if (symbol == SYMBOL_IDENTIFIER || symbol == SYMBOL_INTEGER || symbol == SYMBOL_FLOAT || symbol == SYMBOL_STRING) // SYMBOL_IDENTIFIER, SYMBOL_INTEGER, SYMBOL_FLOAT, SYMBOL_STRING
+    else if (symbol == SYMBOL_IDENTIFIER || symbol == SYMBOL_INTEGER || symbol == SYMBOL_FLOAT || symbol == SYMBOL_STRING || symbol == SYMBOL_NONE) // SYMBOL_IDENTIFIER, SYMBOL_INTEGER, SYMBOL_FLOAT, SYMBOL_STRING
     {
         return INDEX_DATA;
     }
@@ -181,7 +193,7 @@ static Symbol_enumeration get_Symbol (Token* token) // v Pdata v analyze mame za
     }
     else if (token->type == token_type_div_int)
     {
-            return SYMBOL_DIVIDE_INTEGER;
+        return SYMBOL_DIVIDE_INTEGER;
     }
     else if (token->type == token_type_right_bracket)
     {
@@ -206,6 +218,10 @@ static Symbol_enumeration get_Symbol (Token* token) // v Pdata v analyze mame za
     else if (token->type == token_type_identifier )
     {
         return SYMBOL_IDENTIFIER;
+    }
+    else if (token->attribute.keyword == keyword_None && token->type != token_type_EOL && token->type != token_type_colon)
+    {
+        return SYMBOL_NONE;
     }
     else
     {
@@ -264,23 +280,36 @@ static Data_type get_data_Type (Token* token, Parser_data* data)
     {
         return DATA_TYPE_STRING;
     }
+    else if (token->type == token_type_keyword && token->attribute.keyword == keyword_None)
+    {
+        return DATA_TYPE_NONE;
+    }
     else if (token->type == token_type_identifier)
     {
-        symbol = sym_table_search(&data->global_table, token->attribute.s->string);
+        symbol = sym_table_search(&data->local_table, token->attribute.s->string);
 
-        if (symbol != NULL)
+        if (symbol == NULL)
         {
-            return symbol->type;
+            symbol = sym_table_search(&data->global_table, token->attribute.s->string);
+            if (symbol == NULL)
+            {
+                return DATA_TYPE_NOT_DEFINED;
+            }
+            else
+            {
+                return symbol->type;
+            }
         }
         else
         {
-            return DATA_TYPE_NOT_DEFINED;
+            return symbol->type;
         }
     }
     else
     {
         return DATA_TYPE_NOT_DEFINED;
     }
+
 }
 
 /** Function for
@@ -296,18 +325,10 @@ static Rule_enumeration check_Rule (int count_of_operands, Expression_stack_entr
         switch (first_operand->symbol)
         {
             case SYMBOL_IDENTIFIER:
-                return RULE_OPERAND;
             case SYMBOL_INTEGER:
-                //  data->left_side_id->type = DATA_TYPE_INTEGER;
-                //   data->left_side_id->is_variable = true;
-
-                return RULE_OPERAND;
             case SYMBOL_FLOAT:
-                //      data->left_side_id->type = DATA_TYPE_FLOAT;
-                //     data->left_side_id->is_variable = true;
-                return RULE_OPERAND;
             case SYMBOL_STRING:
-                //    data->left_side_id->type = DATA_TYPE_STRING;
+            case SYMBOL_NONE:
                 return RULE_OPERAND;
             default:
                 return RULE_NOT_DEFINED;
@@ -388,34 +409,43 @@ int semantic_test (Rule_enumeration rule, Expression_stack_entry* first_operand,
 /*******************************************************************************************/
 /******************************ERROR_STATES*************************************************/
 /*******************************************************************************************/
-
     if (rule == RULE_OPERAND)
     {
-        if (first_operand == DATA_TYPE_NOT_DEFINED)
+        if (first_operand->data_type == DATA_TYPE_NOT_DEFINED)
         {
-            return (error_semantic_compatibility);   //error4
+           //return (error_semantic_compatibility);   //error4
         }
     }
     else if (rule == RULE_BRACKETS)
     {
         if (second_operand->data_type == DATA_TYPE_NOT_DEFINED)
         {
-            return (error_semantic_compatibility);   //error4
+            //return (error_semantic_compatibility);   //error4
         }
     }
     else
     {
         if (first_operand->data_type == DATA_TYPE_NOT_DEFINED || third_operand->data_type == DATA_TYPE_NOT_DEFINED)
         {
-            if(data->in_function == true)
+            if(data->in_function == true && data->right_side_id != NULL)
             {
                 Gen_type_control(Term_adjustment(data->right_side_id->identifier,4),Term_adjustment(data->token.attribute.s->string,4));
             }
+            else if(data->in_function == true && data->left_side_id != NULL)
+            {
+                Gen_type_control(Term_adjustment(data->left_side_id->identifier,4),Term_adjustment(data->token.attribute.s->string,4));
+            }
             else
             {
-                return (error_semantic_compatibility);   //error4
+                //return (error_semantic_compatibility);   //error4
             }
         }
+
+        if ((first_operand->data_type == DATA_TYPE_NONE || third_operand->data_type == DATA_TYPE_NONE) && (rule != RULE_EQUAL && rule != RULE_NOT_EQUAL))
+        {
+            return error_semantic_compatibility;
+        }
+
         if (rule == RULE_DIVIDE  || rule == RULE_DIVIDE_INT)
         {
                 //zatial nedorobena funkcia
@@ -439,11 +469,11 @@ int semantic_test (Rule_enumeration rule, Expression_stack_entry* first_operand,
     {
         *type_of_result = DATA_TYPE_INTEGER;
 
-        if (first_operand->data_type == DATA_TYPE_INTEGER || third_operand->data_type == DATA_TYPE_FLOAT)
+        if (first_operand->data_type == DATA_TYPE_INTEGER && third_operand->data_type == DATA_TYPE_FLOAT)
         {
             first_operand_to_float = true;
         }
-        else if (first_operand->data_type == DATA_TYPE_FLOAT || third_operand->data_type == DATA_TYPE_INTEGER)
+        else if (first_operand->data_type == DATA_TYPE_FLOAT && third_operand->data_type == DATA_TYPE_INTEGER)
         {
             third_operand_to_float = true;
         }
@@ -452,15 +482,18 @@ int semantic_test (Rule_enumeration rule, Expression_stack_entry* first_operand,
     {
         *type_of_result = DATA_TYPE_INTEGER;
 
-        if (first_operand->data_type != third_operand->data_type) {
+        if (first_operand->data_type != third_operand->data_type)
+        {
             if ((first_operand->data_type == DATA_TYPE_STRING || third_operand->data_type == DATA_TYPE_STRING))
             {
                 return error_semantic_compatibility;   //error4
             }
-            if (first_operand->data_type == DATA_TYPE_INTEGER || third_operand->data_type == DATA_TYPE_FLOAT) {
+            if (first_operand->data_type == DATA_TYPE_INTEGER && third_operand->data_type == DATA_TYPE_FLOAT)
+            {
                 first_operand_to_float = true;
             }
-            else if (first_operand->data_type == DATA_TYPE_FLOAT || third_operand->data_type == DATA_TYPE_INTEGER) {
+            else if (first_operand->data_type == DATA_TYPE_FLOAT && third_operand->data_type == DATA_TYPE_INTEGER)
+            {
                 third_operand_to_float = true;
             }
         }
@@ -497,9 +530,9 @@ int semantic_test (Rule_enumeration rule, Expression_stack_entry* first_operand,
     else if (rule == RULE_MINUS || rule == RULE_MULTIPLY)
     {
         *type_of_result = DATA_TYPE_INTEGER;
-        if (first_operand->data_type != DATA_TYPE_INTEGER || third_operand->data_type !=DATA_TYPE_INTEGER)
+        if (first_operand->data_type != DATA_TYPE_INTEGER || third_operand->data_type != DATA_TYPE_INTEGER)
         {
-            if(first_operand->data_type == DATA_TYPE_STRING || third_operand->data_type ==DATA_TYPE_STRING)
+            if (first_operand->data_type == DATA_TYPE_STRING || third_operand->data_type == DATA_TYPE_STRING)
             {
                 return (error_semantic_compatibility);   //error4
             }
@@ -520,17 +553,17 @@ int semantic_test (Rule_enumeration rule, Expression_stack_entry* first_operand,
     else if (rule == RULE_DIVIDE)
     {
         *type_of_result = DATA_TYPE_FLOAT;
-        if(first_operand->data_type != DATA_TYPE_FLOAT || third_operand->data_type !=DATA_TYPE_FLOAT)
+        if (first_operand->data_type != DATA_TYPE_FLOAT || third_operand->data_type !=DATA_TYPE_FLOAT)
         {
-            if(first_operand->data_type == DATA_TYPE_STRING || third_operand->data_type == DATA_TYPE_STRING)
+            if (first_operand->data_type == DATA_TYPE_STRING || third_operand->data_type == DATA_TYPE_STRING)
             {
                 return (error_semantic_compatibility);   //error4
             }
-            if(first_operand->data_type == DATA_TYPE_INTEGER)
+            if (first_operand->data_type == DATA_TYPE_INTEGER)
             {
                 first_operand_to_float = true;
             }
-            if(third_operand->data_type == DATA_TYPE_INTEGER)
+            if (third_operand->data_type == DATA_TYPE_INTEGER)
             {
                 third_operand_to_float = true;
             }
@@ -540,8 +573,7 @@ int semantic_test (Rule_enumeration rule, Expression_stack_entry* first_operand,
     {
         *type_of_result = DATA_TYPE_INTEGER;
 
-        if
-        (first_operand->data_type != DATA_TYPE_INTEGER || third_operand->data_type !=DATA_TYPE_INTEGER)
+        if (first_operand->data_type != DATA_TYPE_INTEGER || third_operand->data_type !=DATA_TYPE_INTEGER)
         {
             return (error_semantic_compatibility);   //error4
         }
@@ -550,13 +582,11 @@ int semantic_test (Rule_enumeration rule, Expression_stack_entry* first_operand,
     if (first_operand_to_float == true)
     {
         Gen_cast_stack_op1 ();
-        printf("GENERATION: First operand to float!\n");
     }
 
     if (third_operand_to_float == true)
     {
         Gen_cast_stack_op2 ();
-        printf("GENERATION: Third operand to float!\n");
     }
 
 
@@ -642,6 +672,8 @@ int expression(Parser_data* data)
     Expression_stack_entry* ter_on_stack_top;  // deklaracia ukazovatela na ter na stack tope
     Symbol_enumeration actual_symbol;  // deklaracia aktualneho symbolu z vyrazu
 
+    int tmp = 0;
+
     int return_for_analysis = 0;    // konecne navratova hodnota vyrazov
 
     for (int condition = 0; condition == 0;) // loop pre precedencni algoritmus
@@ -656,7 +688,8 @@ int expression(Parser_data* data)
         }
         else if (ter_on_stack_top->symbol == SYMBOL_IDENTIFIER) // ak ter je identifikator, tak pozrie ci v tabulke uz nie je v globalnej tabulke
         {
-            if (data->in_function == true) {
+            if (data->in_function == true)
+            {
                 TData *variable = sym_table_search(&data->local_table, data->token.attribute.s->string);
                 if (variable != NULL)
                 {
@@ -679,28 +712,39 @@ int expression(Parser_data* data)
 
         int INDEX = precedence_table[get_Index(ter_on_stack_top->symbol)][get_Index(actual_symbol)]; //ziskam indexy actual symbol a stack top, dosadim ich do pola tabulky ako suradnice
 
-        if (INDEX == SFT)
+        if (INDEX == LSS)
         {
             int result1 = Expression_stack_insert_after_top_ter(&stack_exp, SYMBOL_STOP, DATA_TYPE_NOT_DEFINED); // dosadim si stop symbol, ktoy nahradzuje < v precedencnej analyze
             int result2 = Expression_stack_push(&stack_exp, actual_symbol, get_data_Type(&data->token, data)); // najprv ziskame data type prveho tokenu,
 
-            if(!(result1 || result2)) // ak je aspon jedno z nich pravda, vyhodi error
+            if(!(result1 || result2)) // ak je aspon jedno z nich nepravda, vyhodi error
             {
                 Expression_stack_free(&stack_exp);
                 return error_internal;
             }
 
-            if (actual_symbol == SYMBOL_IDENTIFIER || actual_symbol == SYMBOL_INTEGER || actual_symbol == SYMBOL_FLOAT || actual_symbol == SYMBOL_STRING)
+            if (actual_symbol == SYMBOL_IDENTIFIER || actual_symbol == SYMBOL_INTEGER || actual_symbol == SYMBOL_FLOAT || actual_symbol == SYMBOL_STRING || actual_symbol == SYMBOL_NONE)
             {
+                if(tmp == 0)
+                {
+
+                    tmp = 1;
+                }
+                else if(tmp == 1)
+                {
+
+                    tmp = 0;
+                }
+
                 if (actual_symbol == SYMBOL_IDENTIFIER)
                 {
-                    if (sym_table_search(&data->local_table, data->token.attribute.s->string) != NULL) {
+                    if (sym_table_search(&data->local_table, data->token.attribute.s->string) != NULL)
+                    {
                         Gen_push_stack_op (Term_adjustment(data->token.attribute.s->string,4));
-                    } else if (sym_table_search(&data->global_table, data->token.attribute.s->string) != NULL) {
+                    }
+                    else if (sym_table_search(&data->global_table, data->token.attribute.s->string) != NULL)
+                    {
                         Gen_push_stack_op (Term_adjustment(data->token.attribute.s->string,3));
-                    } else {
-                        //error;
-                        // asi zbytiocne, ak na nic neprideme, tak vyamzat
                     }
                 }
                 else if (actual_symbol == SYMBOL_INTEGER)
@@ -710,6 +754,10 @@ int expression(Parser_data* data)
                 else if (actual_symbol == SYMBOL_FLOAT)
                 {
                     Gen_push_stack_op (Term_adjustment(data->token.attribute.s->string,1));
+                }
+                else if (actual_symbol == SYMBOL_NONE)
+                {
+                    Gen_push_stack_op (Term_adjustment(data->token.attribute.s->string,6));
                 }
                 else
                 {
@@ -727,7 +775,7 @@ int expression(Parser_data* data)
                 return return_for_analysis;
             }
         }
-        else if (INDEX == RED) // zredukovanie vyrazu pomocou daneho pravidla
+        else if (INDEX == GRT) // zredukovanie vyrazu pomocou daneho pravidla
         {
             return_for_analysis = reduce_by_rule(data);
             if (return_for_analysis)
@@ -748,7 +796,7 @@ int expression(Parser_data* data)
                 return return_for_analysis;
             }
         }
-        else if (INDEX == ERR) // ostali nam iba znaky $
+        else if (INDEX == END) // ostali nam iba znaky $
         {
             if (ter_on_stack_top->symbol == SYMBOL_DOLLAR && actual_symbol == SYMBOL_DOLLAR)
             {
@@ -798,12 +846,6 @@ int expression(Parser_data* data)
 
 
 
-
-
-
-
-
-
 /** Processing <prog_body> rule
  *
  * @param data - Parser data
@@ -812,7 +854,6 @@ int expression(Parser_data* data)
 int prog_body(Parser_data* data)
 {
     int result;
-
 
     //Chyba indent na prvom riadku
     if(data->token.type == token_type_indent)
@@ -857,18 +898,9 @@ int prog_body(Parser_data* data)
 
         //osetrenie medzier
         MACRO_GET_TOKEN();
-
-        while(data->token.type == token_type_EOL)
-        {
-            if(data->token.type == token_type_EOL)
-            {
-                MACRO_CHECK_TYPE(token_type_EOL);
-            }
-            MACRO_GET_TOKEN();
-        }
-
-
+        processing_EOLs(data);
         MACRO_CHECK_TYPE(token_type_indent);
+
         MACRO_GET_TOKEN_AND_CHECK_RULE(statement);
         MACRO_CHECK_TYPE(token_type_dedent);
 
@@ -891,7 +923,7 @@ int prog_body(Parser_data* data)
     // <prog_body> ->  EOL  <prog_body>
     else if(data->token.type == token_type_EOL)
     {
-        MACRO_GET_TOKEN();
+        processing_EOLs(data);
         return prog_body(data);
     }
     // <prog_body> -> <main_body>
@@ -905,7 +937,6 @@ int prog_body(Parser_data* data)
         return main_body(data);
     }
 
-    return token_scan_accepted;
 }
 
 /** Processing <main_body> rule
@@ -979,37 +1010,70 @@ int end_main(Parser_data* data)
  * @param data - Parser data
  * @return - if processed parameter is OK return 0, otherwise error
  */
+
+
+/*
+int func_call_params_n(Parser_data* data, int param_cnt)
+{
+    int result;
+    MACRO_GET_TOKEN();
+
+
+    if(data->token.type == token_type_comma)
+    {
+        char id_name[100];
+        MACRO_GET_TOKEN();
+        func_call_params_n(data, param_cnt);
+        id_name[param_cnt] = data->token.attribute.s->string;
+        param_cnt++;
+
+
+    }
+    else if(data->token.type == token_type_right_bracket)
+    {
+        return 0;
+    }
+}
+*/
+
+
+
+
 int par_list(Parser_data* data)
 {
     int result;
-
-    data->param_index = 0;
+    int i = 0;
 
     // <par_list> ->   id  <par_list2>
-    if (data->token.type == token_type_identifier)
-    {
+    if (data->token.type == token_type_identifier) {
+
+        data->param_index = 0;
+
         //if there is function named as parameter
-        if(sym_table_search(&data->global_table, data->token.attribute.s->string))
-        {
+        if (sym_table_search(&data->global_table, data->token.attribute.s->string)) {
             return error_semantic;
         }
 
         //add param to the local symbol table
         bool internal_error;
-        if(!(data->right_side_id = sym_table_add_symbol(&data->local_table, data->token.attribute.s->string, &internal_error)))
-        {
-            if(internal_error)
-            {
+        if (!(data->right_side_id = sym_table_add_symbol(&data->local_table, data->token.attribute.s->string,
+                                                         &internal_error))) {
+            if (internal_error) {
                 return error_internal;
-            } else{
+            } else {
                 return error_semantic;
             }
         }
 
-        if(!sym_table_add_parameter(data->current_process_id, DATA_TYPE_NOT_DEFINED))
-        {
+
+        if (!sym_table_add_parameter(data->current_process_id, DATA_TYPE_NOT_DEFINED)) {
             return error_internal;
         }
+
+        data->right_side_id->is_variable = true;
+        //add_string_to_lexem_string(data->current_process_id->params, data->token.attribute.s->string);
+        //add_string_to_lexem_string(data->current_process_id->params, "$");
+        stackPush_param(stack_param, data->token.attribute.s->string);
 
         MACRO_GET_TOKEN_AND_CHECK_RULE(par_list2);
     }
@@ -1023,6 +1087,7 @@ int par_list(Parser_data* data)
  * @param data - Parser data
  * @return - if processed parameters are OK return 0, otherwise error
  */
+
 int par_list2(Parser_data* data)
 {
     int result;
@@ -1049,14 +1114,19 @@ int par_list2(Parser_data* data)
             return error_internal;
         }
 
+        data->right_side_id->is_variable = true;
+        //add_string_to_lexem_string(data->current_process_id->params, data->token.attribute.s->string);
+        //add_string_to_lexem_string(data->current_process_id->params, "$");
+        stackPush_param(stack_param, data->token.attribute.s->string);
+
         MACRO_GET_TOKEN()
         return par_list2(data);
-        //return token_scan_accepted;
     }
 
     // <par_list2> -> ε
     return token_scan_accepted;
 }
+
 
 /** Processing <statement> rule
  *
@@ -1087,14 +1157,7 @@ int statement(Parser_data* data)
 
         //osetrenie medzier
         MACRO_GET_TOKEN();
-        while(data->token.type == token_type_EOL)
-        {
-            if(data->token.type == token_type_EOL)
-            {
-                MACRO_CHECK_TYPE(token_type_EOL);
-            }
-            MACRO_GET_TOKEN();
-        }
+        processing_EOLs(data);
         MACRO_CHECK_TYPE(token_type_indent);
 
 
@@ -1105,19 +1168,10 @@ int statement(Parser_data* data)
         Gen_else_head();
 
         MACRO_GET_TOKEN_AND_CHECK_TYPE(token_type_colon);
-        //MACRO_GET_TOKEN_AND_CHECK_TYPE(token_type_EOL);
 
         //osetrenie medzier
         MACRO_GET_TOKEN();
-
-        while(data->token.type == token_type_EOL)
-        {
-            if(data->token.type == token_type_EOL)
-            {
-                MACRO_CHECK_TYPE(token_type_EOL);
-            }
-            MACRO_GET_TOKEN();
-        }
+        processing_EOLs(data);
         MACRO_CHECK_TYPE(token_type_indent);
 
 
@@ -1140,7 +1194,6 @@ int statement(Parser_data* data)
 
         data->in_while_or_if = true;
 
-        //
         Gen_while_label();
 
         MACRO_GET_TOKEN_AND_CHECK_RULE(expression);
@@ -1151,18 +1204,8 @@ int statement(Parser_data* data)
 
         //osetrenie medzier
         MACRO_GET_TOKEN();
-
-        while(data->token.type == token_type_EOL)
-        {
-            if(data->token.type == token_type_EOL)
-            {
-                MACRO_CHECK_TYPE(token_type_EOL);
-            }
-            MACRO_GET_TOKEN();
-        }
-
+        processing_EOLs(data);
         MACRO_CHECK_TYPE(token_type_indent);
-
 
         MACRO_GET_TOKEN_AND_CHECK_RULE(statement);
         MACRO_CHECK_TYPE(token_type_dedent);
@@ -1179,22 +1222,31 @@ int statement(Parser_data* data)
     /// <statement>  id = <def_value> EOL  <statement>
     else if(data->token.type == token_type_identifier)
     {
-
+        //osetrenie na riadku ->  nazov_funkcie()
         data->right_side_id = sym_table_search(&data->global_table, data->token.attribute.s->string);
+
+
         if(data->right_side_id != NULL && data->right_side_id->is_function == true)
         {
             MACRO_GET_TOKEN_AND_CHECK_TYPE(token_type_left_bracket);
             MACRO_GET_TOKEN_AND_CHECK_RULE(arg_list);
             MACRO_CHECK_TYPE(token_type_right_bracket);
 
+
+            Gen_function_call(data->right_side_id->identifier);
+
+
+
             MACRO_GET_TOKEN();
             return statement(data);
         }
+
 
         //test ci sa premenna nevola ako skor definovana funkcia a viacnasobne pouzitie GLOBALNEJ premennej
         if(data->in_function == false)
         {
             TData* function_or_variable = sym_table_search(&data->global_table, data->token.attribute.s->string);
+            data->left_side_id = function_or_variable;
 
             if(function_or_variable != NULL && function_or_variable->is_function == true)
             {
@@ -1206,6 +1258,12 @@ int statement(Parser_data* data)
                 MACRO_GET_TOKEN_AND_CHECK_TYPE(token_type_assign);
                 MACRO_GET_TOKEN_AND_CHECK_RULE(def_value);
 
+                if(data->left_side_id->global == false)
+                {
+                    number_to_term_function = 4;
+                } else{
+                    number_to_term_function = 3;
+                }
                 //GENEROVANIE 2
                 Gen_save_expr_or_retval(Term_adjustment(data->left_side_id->identifier, number_to_term_function));
 
@@ -1236,6 +1294,7 @@ int statement(Parser_data* data)
                 //viacnasobne pouzitie premennev vo funkcii
                 data->left_side_id = var;
             }
+            data->left_side_id->is_variable = true;
         }
         //Ak niesme tak pridame premennu do globalnej tabulky
         else{
@@ -1270,10 +1329,15 @@ int statement(Parser_data* data)
             data->left_side_id->global = true;
             number_to_term_function = 3;
         }
-        data->left_side_id->defined = true;
 
-        //Generovanie 1
-        Gen_var_def(Term_adjustment(data->left_side_id->identifier, number_to_term_function));
+
+        if(data->left_side_id->defined == false)
+        {
+            //Generovanie 1
+            Gen_var_def(Term_adjustment(data->left_side_id->identifier, number_to_term_function));
+            data->left_side_id->defined = true;
+        }
+
 
         //GENEROVANIE 2
         Gen_save_expr_or_retval(Term_adjustment(data->left_side_id->identifier, number_to_term_function));
@@ -1295,8 +1359,8 @@ int statement(Parser_data* data)
         int result;
 
         MACRO_GET_TOKEN_AND_CHECK_TYPE(token_type_left_bracket);
-        MACRO_GET_TOKEN();
 
+        MACRO_GET_TOKEN();
         if(data->token.type == token_type_int || data->token.type == token_type_float || data->token.type == token_type_str || data->token.type == token_type_identifier)
         {
 
@@ -1338,22 +1402,36 @@ int statement(Parser_data* data)
             }
 
             Gen_push_arg(Term_adjustment(data->token.attribute.s->string, number_to_term_function));
+
+
+
             Gen_function_call("print");
+
+
 
             MACRO_GET_TOKEN_AND_CHECK_RULE(print_rule);
         }
         else if(data->token.type == token_type_right_bracket)
         {
-
             MACRO_CHECK_TYPE(token_type_right_bracket);
+
+            //prazdny print() "\n" -> generovanie medzeri
+            Gen_push_arg(Term_adjustment("\n", 5));
+
+            Gen_function_call("print");
+
+
             MACRO_GET_TOKEN();
             if(data->token.type == token_type_EOF)
             {
                 return token_scan_accepted;
             }
             MACRO_CHECK_TYPE(token_type_EOL);
+
+            return token_scan_accepted;
         }
 
+        // get next token and execute <statement> rule
         MACRO_GET_TOKEN();
         return statement(data);
     }
@@ -1379,6 +1457,7 @@ int statement(Parser_data* data)
     {
         MACRO_GET_TOKEN_AND_CHECK_TYPE(token_type_EOL);
 
+        // get next token and exexute <statement> rule
         MACRO_GET_TOKEN();
         return statement(data);
     }
@@ -1387,25 +1466,18 @@ int statement(Parser_data* data)
     {
         return prog_body(data);
     }
-    /// <statement> -> ε
+    /// <statement> -> EOL <statement>
     else if(data->token.type == token_type_EOL)
     {
-        MACRO_GET_TOKEN();
-        while(data->token.type == token_type_EOL)
-        {
-            if(data->token.type == token_type_EOL)
-            {
-                MACRO_CHECK_TYPE(token_type_EOL);
-            }
-            MACRO_GET_TOKEN();
-        }
+        processing_EOLs(data);
         return statement(data);
     }
-    /// <statement> -> <expression>
+    /// <statement> -> <value> <expression>
     else if(data->token.type == token_type_int || data->token.type == token_type_float || data->token.type == token_type_str || data->token.attribute.keyword == keyword_None)
     {
         return expression(data);
     }
+    /// <statement> -> id (<arg_list>, <arg_list2>) <statement>
     else if(data->token.type == token_type_keyword)
     {
         data->right_side_id = sym_table_search(&data->global_table, data->token.attribute.s->string);
@@ -1413,6 +1485,7 @@ int statement(Parser_data* data)
         MACRO_GET_TOKEN_AND_CHECK_RULE(arg_list);
         MACRO_CHECK_TYPE(token_type_right_bracket);
 
+        // get next token and exexute <statement> rule
         MACRO_GET_TOKEN();
         return statement(data);
     }
@@ -1425,12 +1498,13 @@ int statement(Parser_data* data)
     {
         return token_scan_accepted;
     }
-    else{
-        return error_syntax;
+    else if(data->token.type == token_type_left_bracket)
+    {
+
+        return expression(data);
+
     }
-
-
-    return token_scan_accepted;
+    return error_syntax;
 }
 
 /** Processing <def_value> rule
@@ -1442,20 +1516,59 @@ int def_value(Parser_data* data)
 {
     int result;
 
+    if(data->token.type == token_type_keyword && data->token.attribute.keyword == keyword_None)
+    {
+        return expression(data);
+    }
+
     if(data->token.type == token_type_identifier || data->token.type == token_type_keyword)
     {
-
         //ak je na zaciatku vyrazu premenna napr b = a + 3
-        TData* var = sym_table_search(&data->global_table, data->token.attribute.s->string);
-        if(var == NULL)
+        if(data->in_function == true)
         {
-            return error_semantic;
-        }
-        else if(var->is_variable == true && var != NULL)
+            TData* var1 = sym_table_search(&data->local_table, data->token.attribute.s->string);
+            data->right_side_id = sym_table_search(&data->global_table, data->token.attribute.s->string);
+            if(var1 == NULL && data->right_side_id != NULL)
+            {
+                if(data->token.type != token_type_identifier)
+                {
+                    MACRO_GET_TOKEN_AND_CHECK_TYPE(token_type_left_bracket);
+                    MACRO_GET_TOKEN_AND_CHECK_TYPE(token_type_right_bracket);
+                } else{
+                    MACRO_GET_TOKEN_AND_CHECK_TYPE(token_type_left_bracket);
+                    MACRO_GET_TOKEN_AND_CHECK_RULE(arg_list);
+                    MACRO_CHECK_TYPE(token_type_right_bracket);
+                }
+
+                MACRO_GET_TOKEN();
+                return statement(data);
+
+            }
+            else if(var1->is_variable == true && var1 != NULL)
+            {
+                MACRO_CHECK_RULE(expression);
+                return token_scan_accepted;
+            }
+            else if(var1 == NULL)
+            {
+                return error_semantic;
+            }
+
+        } else
         {
-            MACRO_CHECK_RULE(expression);
-            return token_scan_accepted;
+            TData* var = sym_table_search(&data->global_table, data->token.attribute.s->string);
+            if(var == NULL)
+            {
+                return error_semantic;
+            }
+            else if(var->is_variable == true && var != NULL)
+            {
+                MACRO_CHECK_RULE(expression);
+                return token_scan_accepted;
+            }
         }
+
+
 
         // <def_value> -> id ( <arg_list> )
         if(data->token.type == token_type_identifier)
@@ -1538,7 +1651,10 @@ int def_value(Parser_data* data)
             } else{
                 MACRO_GET_TOKEN_AND_CHECK_TYPE(token_type_left_bracket);
                 MACRO_GET_TOKEN_AND_CHECK_TYPE(token_type_right_bracket);
+
+                Gen_function_call(data->right_side_id->identifier);
             }
+
 
 
             MACRO_GET_TOKEN();
@@ -1617,15 +1733,16 @@ int arg_list2(Parser_data* data)
  */
 int value(Parser_data* data)
 {
+    int number_to_term_function;
     //check number of arguments
     if(data->right_side_id->params->length_of_lexem_string == data->param_index) // ma tu byt == ale este nemam spravene pridavanie parametrov
     {
-        return error_semantic_compatibility;
+        return error_semantic_bad_count_param;
     }
 
     switch(data->token.type)
     {
-        // <value> -> DOUBLE
+        // <value> -> FLOAT
         case token_type_float:
             if(data->right_side_id->params->string[data->param_index] == 's')
                 return error_semantic_compatibility;
@@ -1658,57 +1775,107 @@ int value(Parser_data* data)
         // <value> -> IDENTIFIER
         case token_type_identifier:;//  C evil magic
 
-            TData* id = sym_table_search(&data->global_table, data->token.attribute.s->string);
-            if(!id) return error_semantic;
+            if(data->in_function == true)
+            {
+                TData* id = sym_table_search(&data->local_table, data->token.attribute.s->string);
+                if(!id) return error_semantic;
+                number_to_term_function = 4;
 
-            int number_to_generate;
+                switch(id->type)
+                {
+                    case DATA_TYPE_INTEGER:
+                        /*
+                        if(data->right_side_id->params->string[data->param_index] == 's')
+                            return error_semantic_compatibility;
+                        if(data->right_side_id->params->string[data->param_index] == 'f')
+                            printf("Treba pretypovat");
+                        printf("good");
+                        */
+                        data->right_side_id->params->string[data->param_index] = 'i';
+                        Gen_push_arg(Term_adjustment(data->token.attribute.s->string, number_to_term_function));
+                        break;
 
+                    case DATA_TYPE_FLOAT:
+                        /*
+                        if(data->right_side_id->params->string[data->param_index] == 's')
+                            return error_semantic_compatibility;
+                        if(data->right_side_id->params->string[data->param_index] == 'i')
+                            return error_semantic_compatibility;
+                        printf("good");
+                        */
+                        data->right_side_id->params->string[data->param_index] = 'f';
+                        Gen_push_arg(Term_adjustment(data->token.attribute.s->string, number_to_term_function));
+                        break;
+
+                    case DATA_TYPE_STRING:
+                        /*
+                        if(data->right_side_id->params->string[data->param_index] != 's')
+                            return error_semantic_compatibility;
+                        */
+                        data->right_side_id->params->string[data->param_index] = 's';
+                        Gen_push_arg(Term_adjustment(data->token.attribute.s->string, number_to_term_function));
+                        break;
+
+                    default:
+                        return error_internal;
+                }
+
+
+            } else{
+                TData* id = sym_table_search(&data->global_table, data->token.attribute.s->string);
+                if(!id) return error_semantic;
+                number_to_term_function = 3;
+
+                switch(id->type)
+                {
+                    case DATA_TYPE_INTEGER:
+                        /*
+                        if(data->right_side_id->params->string[data->param_index] == 's')
+                            return error_semantic_compatibility;
+                        if(data->right_side_id->params->string[data->param_index] == 'f')
+                            printf("Treba pretypovat");
+                        printf("good");
+                        */
+                        data->right_side_id->params->string[data->param_index] = 'i';
+                        Gen_push_arg(Term_adjustment(data->token.attribute.s->string, number_to_term_function));
+                        break;
+
+                    case DATA_TYPE_FLOAT:
+                        /*
+                        if(data->right_side_id->params->string[data->param_index] == 's')
+                            return error_semantic_compatibility;
+                        if(data->right_side_id->params->string[data->param_index] == 'i')
+                            return error_semantic_compatibility;
+                        printf("good");
+                        */
+                        data->right_side_id->params->string[data->param_index] = 'f';
+                        Gen_push_arg(Term_adjustment(data->token.attribute.s->string, number_to_term_function));
+                        break;
+
+                    case DATA_TYPE_STRING:
+                        /*
+                        if(data->right_side_id->params->string[data->param_index] != 's')
+                            return error_semantic_compatibility;
+                        */
+                        data->right_side_id->params->string[data->param_index] = 's';
+                        Gen_push_arg(Term_adjustment(data->token.attribute.s->string, number_to_term_function));
+                        break;
+
+                    default:
+                        return error_internal;
+                }
+            }
+
+            /*
             if(id->global == false)
             {
-                number_to_generate = 4;
+                number_to_term_function = 4;
             } else
             {
-                number_to_generate = 3;
+                number_to_term_function = 3;
             }
+             */
 
-            switch(id->type)
-            {
-                case DATA_TYPE_INTEGER:
-                    /*
-                    if(data->right_side_id->params->string[data->param_index] == 's')
-                        return error_semantic_compatibility;
-                    if(data->right_side_id->params->string[data->param_index] == 'f')
-                        printf("Treba pretypovat");
-                    printf("good");
-                    */
-                    data->right_side_id->params->string[data->param_index] = 'i';
-                    Gen_push_arg(Term_adjustment(data->token.attribute.s->string, number_to_generate));
-                    break;
-
-                case DATA_TYPE_FLOAT:
-                    /*
-                    if(data->right_side_id->params->string[data->param_index] == 's')
-                        return error_semantic_compatibility;
-                    if(data->right_side_id->params->string[data->param_index] == 'i')
-                        return error_semantic_compatibility;
-                    printf("good");
-                    */
-                    data->right_side_id->params->string[data->param_index] = 'f';
-                    Gen_push_arg(Term_adjustment(data->token.attribute.s->string, number_to_generate));
-                    break;
-
-                case DATA_TYPE_STRING:
-                    /*
-                    if(data->right_side_id->params->string[data->param_index] != 's')
-                        return error_semantic_compatibility;
-                    */
-                    data->right_side_id->params->string[data->param_index] = 's';
-                    Gen_push_arg(Term_adjustment(data->token.attribute.s->string, number_to_generate));
-                    break;
-
-                default:
-                    return error_internal;
-            }
             break;
         default:
             return error_syntax;
@@ -1730,6 +1897,7 @@ int print_rule(Parser_data* data)
     int result;
     int number_to_term_function;
 
+    //<print_rule> , <print_rule>
     if(data->token.type == token_type_comma)
     {
         MACRO_CHECK_TYPE(token_type_comma);
@@ -1775,6 +1943,9 @@ int print_rule(Parser_data* data)
             }
 
             Gen_push_arg(Term_adjustment(data->token.attribute.s->string, number_to_term_function));
+
+            //osetrenie volania funkcie v definicii inej funkcie
+
             Gen_function_call("print");
 
 
@@ -1786,6 +1957,13 @@ int print_rule(Parser_data* data)
     else if(data->token.type == token_type_right_bracket)
     {
         MACRO_CHECK_TYPE(token_type_right_bracket);
+
+        //prazdny print() "\n" -> generovanie medzeri
+        Gen_push_arg(Term_adjustment("\n", 5));
+
+        Gen_function_call("print");
+
+
         MACRO_GET_TOKEN();
         if(data->token.type == token_type_EOF)
         {
@@ -1796,7 +1974,7 @@ int print_rule(Parser_data* data)
         return token_scan_accepted;
     }
 
-
+    return error_syntax;
 }
 
 /** Initialization of variables
@@ -1918,10 +2096,12 @@ int analyza()
     Parser_data parser_data;
     Lexem_string string;
     stack = (tStack*) malloc(sizeof(tStack));
+    stack_param = (tStack_Param*) malloc(sizeof(tStack_Param));
+    stackInit_param(stack_param);
     stackInit(stack);
     set_stack(stack);
 
-    // initialization of both strings
+    // initialization of boths strings
     if((!lexem_string_init(&string)) || (!lexem_string_init(&IFJcode19)))
     {
         return error_internal;
@@ -1955,7 +2135,8 @@ int analyza()
     //free all variables
     lexem_string_clear(&string);
     free_variables(&parser_data);
-
+    free(stack);
+    free(stack_param);
     return result;
 }
 

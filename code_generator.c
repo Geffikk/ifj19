@@ -2,6 +2,8 @@
 /***********************************************************
  * @author : Andrej Pavlovic <xpavlo14@stud.fit.vutbr.cz>
  * Subject : IFJ
+ * Project : Compiler implementation imperativ language IFJ
+ * @brief : Code generation
 ***********************************************************/
 
 #include <string.h>
@@ -9,6 +11,9 @@
 #include <stdlib.h>
 
 #include "code_generator.h"
+#include "lexem_string.h"
+
+Lexem_string IFJcode19;
 
 
 #define GEN_CHAR(code) \
@@ -171,19 +176,21 @@ bool Gen_Finish () {
 	return true;
 }
 
-char* Term_adjustment (const char *term, const int data_type) {
+char* Term_adjustment (char *term, const int type) {
 
 	static char new_term[1000]; // max + 7
 	
-	switch (data_type) {
+	switch (type) {
 		case 0 :
 			strcpy(new_term, "int@");
 			strcat(new_term, term);
 			break;
 
-		case 1 :
+		case 1 : 0; // label can be followed only by statement (declaration != statement)
+			char tmp[1000];
 			strcpy(new_term, "float@");
-			strcat(new_term, term);
+			sprintf(tmp, "%a", strtod(term, NULL));
+			strcat(new_term, tmp);
 			break;
 
 		case 2 :
@@ -276,7 +283,7 @@ char* Term_adjustment (const char *term, const int data_type) {
 
 bool Gen_return () {
 
-	GEN_STRING("POPS LF@%retval");
+	GEN_CONST_STRING_AND_EOL("POPS LF@%retval");
 	GEN_CONST_STRING_AND_EOL("RETURN");
 
 	return true;
@@ -325,10 +332,10 @@ bool Gen_save_expr_or_retval (const char *var_id) {
 
 bool Gen_string_concat () {
 
-	GEN_CONST_STRING_AND_EOL("POPS GF@tmp1");
-	GEN_CONST_STRING_AND_EOL("POPS GF@tmp2");
-	GEN_CONST_STRING_AND_EOL("CONCAT GF@tmp2 GF@tmp2 GF@tmp1");
-	GEN_CONST_STRING_AND_EOL("PUSHS GF@tmp2");
+	GEN_CONST_STRING_AND_EOL("POPS GF@%tmp1");
+	GEN_CONST_STRING_AND_EOL("POPS GF@%tmp2");
+	GEN_CONST_STRING_AND_EOL("CONCAT GF@%tmp2 GF@%tmp2 GF@%tmp1");
+	GEN_CONST_STRING_AND_EOL("PUSHS GF@%tmp2");
 
 	return true;
 }
@@ -348,7 +355,7 @@ bool Gen_type_control (const char *term1, const char *term2)
     GEN_INT(i);
     GEN_CONST_STRING_AND_EOL(" GF@%tmp1 bool@true");
     GEN_CONST_STRING_AND_EOL("EXIT int@4");
-    GEN_CONST_STRING_AND_EOL("LABEL ?_type_");
+    GEN_STRING("LABEL ?_type_");
     GEN_INT(i); GEN_EOL();
 
     i++;
@@ -370,25 +377,25 @@ bool Gen_expr_calc (Rule_enumeration rule) {
 			break;
 
 		case RULE_LESS_EQUAL :
-			GEN_CONST_STRING_AND_EOL("POPS GF@tmp1");
-			GEN_CONST_STRING_AND_EOL("POPS GF@tmp2");
-			GEN_CONST_STRING_AND_EOL("PUSHS GF@tmp2");
-			GEN_CONST_STRING_AND_EOL("PUSHS GF@tmp1");
+			GEN_CONST_STRING_AND_EOL("POPS GF@%tmp1");
+			GEN_CONST_STRING_AND_EOL("POPS GF@%tmp2");
+			GEN_CONST_STRING_AND_EOL("PUSHS GF@%tmp2");
+			GEN_CONST_STRING_AND_EOL("PUSHS GF@%tmp1");
 			GEN_CONST_STRING_AND_EOL("LTS");
-			GEN_CONST_STRING_AND_EOL("PUSHS GF2tmp2");
-			GEN_CONST_STRING_AND_EOL("PUSHS GF2tmp1");
+			GEN_CONST_STRING_AND_EOL("PUSHS GF@%tmp2");
+			GEN_CONST_STRING_AND_EOL("PUSHS GF@%tmp1");
 			GEN_CONST_STRING_AND_EOL("EQS");
 			GEN_CONST_STRING_AND_EOL("ORS");
 			break;
 
 		case RULE_MORE_EQUAL :
-			GEN_CONST_STRING_AND_EOL("POPS GF@tmp1");
-			GEN_CONST_STRING_AND_EOL("POPS GF@tmp2");
-			GEN_CONST_STRING_AND_EOL("PUSHS GF@tmp2");
-			GEN_CONST_STRING_AND_EOL("PUSHS GF@tmp1");
+			GEN_CONST_STRING_AND_EOL("POPS GF@%tmp1");
+			GEN_CONST_STRING_AND_EOL("POPS GF@%tmp2");
+			GEN_CONST_STRING_AND_EOL("PUSHS GF@%tmp2");
+			GEN_CONST_STRING_AND_EOL("PUSHS GF@%tmp1");
 			GEN_CONST_STRING_AND_EOL("GTS");
-			GEN_CONST_STRING_AND_EOL("PUSHS GF2tmp2");
-			GEN_CONST_STRING_AND_EOL("PUSHS GF2tmp1");
+			GEN_CONST_STRING_AND_EOL("PUSHS GF@%tmp2");
+			GEN_CONST_STRING_AND_EOL("PUSHS GF@%tmp1");
 			GEN_CONST_STRING_AND_EOL("EQS");
 			GEN_CONST_STRING_AND_EOL("ORS");
 			break;

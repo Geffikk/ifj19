@@ -1,6 +1,7 @@
 
-/************************* ANALYZA *************************
+/************************* Syntactic and semantic analisis *************************
  * @author : Patrik Tomov <xtomov0200@stud.fit.vutbr.cz>
+ * @author : Martin Valach <xvalac12@stud.fit.vutbr.cz>
 ***********************************************************/
 
 #ifndef IFJ_19_ANALYZA_H
@@ -10,20 +11,20 @@
 #include "symtable.h"
 #include "scanner.h"
 
+
 /** Type of SIGN **/
 typedef enum
 {
-    SFT,	// < SHIFT 	0
-    MCH,	// = MATCH 	1
-    RED,	// > REDUCE 2
-    ERR	    // # ERROR 	3
+    LSS,	// LESS           <  	0
+    MCH,	// MATCH          = 	1
+    GRT,	// REDUCE         >     2
+    END	    // END or ERROR  	    3
 }
 Sign_enumeration;
 
 /** Type of INDEX **/
 typedef enum
 {
-
     INDEX_EQUAL,                    // index for ==                         0
     INDEX_NOT_EQUAL,                // index for !=                         1
     INDEX_LESS_EQUAL,               // index for <=                         2
@@ -58,10 +59,11 @@ typedef enum
     SYMBOL_INTEGER,		    // type int		    		    13
     SYMBOL_FLOAT,		    // type double		    		14
     SYMBOL_STRING,		    // type char/string		    	15
-    SYMBOL_IDENTIFIER,	    // ID					        16
-    SYMBOL_DOLLAR,		    // symbol for something			17
-    SYMBOL_STOP, 		    // stop symbol on stack			18
-    SYMBOL_NOT_DEFINED	    // not a symbol				    19
+    SYMBOL_NONE,            // type None                    16
+    SYMBOL_IDENTIFIER,	    // ID					        17
+    SYMBOL_DOLLAR,		    // symbol for something			18
+    SYMBOL_STOP, 		    // stop symbol on stack			19
+    SYMBOL_NOT_DEFINED	    // not a symbol				    20
 }
 Symbol_enumeration;
 
@@ -78,10 +80,10 @@ typedef enum
     RULE_PLUS,		    // RULE E -> E + E	    7
     RULE_MINUS,	    	// RULE E -> E - E	    8
     RULE_MULTIPLY,		// RULE E -> E * E	    9
-    RULE_DIVIDE,		// RULE E -> E / E	1   0
+    RULE_DIVIDE,		// RULE E -> E / E	    10
     RULE_DIVIDE_INT,	// RULE E -> E // E 	11
     RULE_BRACKETS,		// RULE E -> (E)		12
-    RULE_NOT_DEFINED	// not a rule		    13
+    RULE_NOT_DEFINED	// not a kwnown rule    13
 }
 Rule_enumeration;
 
