@@ -13,7 +13,7 @@
 #define state_identifier_keyword 101 // Start with letter
 #define state_comment 103 // When symbol is (') , then this is start of string
 
-// States - perations with numbers
+// States - operations with numbers
 #define state_int 109
 #define state_float 110
 #define state_point 111
@@ -30,13 +30,11 @@
 #define state_string 118
 #define state_escape 120
 #define state_escape_hexadecimal_first 124
-#define state_escape_hexadecimal_second 125
 #define state_EOL 127
 #define state_documentation_string_first 128
 #define state_documentation_string_second 129
 #define state_documentation_string_finish_first 130
 #define state_documentation_string_finish_second 131
-#define state_documentation_string 132
 
 
 FILE *source_file; // Global variable for source file because of using in scanner.c
@@ -47,10 +45,8 @@ int indentation_count = 0; // Counting indentation and compare if indentation is
 
 bool dedent_flag = false; // FLAG for generating dedent tokens
 bool documentation_flag = false; // FLAG for report that is documentation string
-bool indentation_flag = false;
-bool first_line_indented = false;
-bool first_token = true;
-
+bool indentation_flag = false; // FLAG (now i will generate INDENT)
+bool first_line_indented = false; // FLAG for first line (when is indented then error)
 
 /** Classic return exit function
  *
@@ -216,7 +212,8 @@ int get_token(Token *token, tStack *stack) {
     char stack_top_char = 0; // Assign top char from indentation stack
     char excess_zero = 0; // Assign first number from number and cmp if is 0 && (excess)
 
-    int state = state_start; // Initial start state
+    int state;
+    state = state_start; // Initial start state
     token->type = token_type_empty; // Set token type that is empty
 
     if(indentation_flag == true)
@@ -240,7 +237,6 @@ int get_token(Token *token, tStack *stack) {
             if(indentation_count != stack_top_char)
             {
                 indentation_count = 0; // Count of white space set on zero
-                fprintf(stderr, "Inconsistent dedent \n");
                 return free_source(error_lexical, str);
             }
             dedent_flag = false;
@@ -266,7 +262,7 @@ int get_token(Token *token, tStack *stack) {
                 {
                     if (!add_char_to_lexem_string(str, c)) // Add char to lexem string
                     {
-                        free_source(error_internal, str);
+                        return free_source(error_internal, str);
                     }
                     state = state_identifier_keyword;
                 }
@@ -275,7 +271,7 @@ int get_token(Token *token, tStack *stack) {
                     excess_zero = c; // Assign first number from number (cmp if is excess zero)
                     if (!add_char_to_lexem_string(str, c))
                     {
-                        free_source(error_internal, str);
+                        return free_source(error_internal, str);
                     }
                     state = state_int;
                 }
@@ -390,7 +386,6 @@ int get_token(Token *token, tStack *stack) {
                 // If first number from some number is zero and then is another number in queue then error (EXCESS ZERO)
                 if (excess_zero == '0' && isdigit(c))
                 {
-                    fprintf(stderr, "Excess zero !\n");
                     return free_source(error_lexical, str);
                 }
 
@@ -427,14 +422,16 @@ int get_token(Token *token, tStack *stack) {
 
             case (state_comment):
 
+                // scanner analyzed end of line comment
                 if (c == '\n' && documentation_flag == false)
                 {
+                    // EOL return to source file and set state_start (i dont need line comment token)
                     ungetc(c, source_file);
                     state = state_start;
                 }
+                // Line comment && Doc. String have to end with (\n or """) so when EOF then error
                 else if (c == EOF)
                 {
-                    ungetc(c, source_file);
                     return free_source(error_lexical, str);
                 }
                 else if (c == '"' && documentation_flag == true)
@@ -443,6 +440,32 @@ int get_token(Token *token, tStack *stack) {
                 }
                 else if (documentation_flag == true)
                 {
+                    if(c == '\\')
+                    {
+                        char tmp = 92;
+                        c = getc(source_file);
+                        if (c == '"')
+                        {
+                            c = '\"';
+                            if (!add_char_to_lexem_string(str, c))
+                            {
+                                return free_source(error_internal, str);
+                            }
+                        }
+                        else
+                        {
+                            if (!add_char_to_lexem_string(str, tmp))
+                            {
+                                return free_source(error_internal, str);
+                            }
+                            if (!add_char_to_lexem_string(str, c))
+                            {
+                                return free_source(error_internal, str);
+                            }
+                        }
+                        state = state_comment;
+                        break;
+                    }
                     if(!add_char_to_lexem_string(str, c))
                     {
                         return free_source(error_internal, str);
@@ -458,13 +481,13 @@ int get_token(Token *token, tStack *stack) {
                 {
                     if (!add_char_to_lexem_string(str, c))
                     {
-                        free_source(error_internal, str);
+                        return free_source(error_internal, str);
                     }
                     state = state_float;
                 }
                 else
                 {
-                    free_source(error_lexical, str);
+                    return free_source(error_lexical, str);
                 }
                 break;
 
@@ -474,7 +497,7 @@ int get_token(Token *token, tStack *stack) {
                 if (c == '+' || c == '-') {
                     if (!add_char_to_lexem_string(str, c))
                     {
-                        free_source(error_internal, str);
+                        return free_source(error_internal, str);
                     }
                     state = state_exponent_assigned;
                 }
@@ -482,27 +505,30 @@ int get_token(Token *token, tStack *stack) {
                 {
                     if (!add_char_to_lexem_string(str, c))
                     {
-                        free_source(error_internal, str);
+                        return free_source(error_internal, str);
                     }
                     state = state_exponent_finish;
                 }
                 else
                 {
-                    free_source(error_lexical, str);
+                    return free_source(error_lexical, str);
                 }
                 break;
 
 
             case (state_exponent_assigned):
 
-                if (isdigit(c)) {
-                    if (!add_char_to_lexem_string(str, c)) {
-                        free_source(error_internal, str);
+                if (isdigit(c))
+                {
+                    if (!add_char_to_lexem_string(str, c))
+                    {
+                        return free_source(error_internal, str);
                     }
                     state = state_exponent_finish;
-                } else {
-                    ungetc(c, source_file);
-                    free_source(error_lexical, str);
+                }
+                else
+                {
+                    return free_source(error_lexical, str);
                 }
                 break;
 
@@ -513,14 +539,14 @@ int get_token(Token *token, tStack *stack) {
                 {
                     if (!add_char_to_lexem_string(str, c))
                     {
-                        free_source(error_internal, str);
+                        return free_source(error_internal, str);
                     }
                 }
                 else if (c == 'E' || c == 'e')
                 {
                     if (!add_char_to_lexem_string(str, c))
                     {
-                        free_source(error_internal, str);
+                        return free_source(error_internal, str);
                     }
                     state = state_exponent;
                 }
@@ -538,7 +564,7 @@ int get_token(Token *token, tStack *stack) {
                 {
                     if (!add_char_to_lexem_string(str, c))
                     {
-                        free_source(error_internal, str);
+                        return free_source(error_internal, str);
                     }
                 }
                 else
@@ -572,8 +598,9 @@ int get_token(Token *token, tStack *stack) {
                 {
                     if (!add_char_to_lexem_string(str, c))
                     {
-                        free_source(error_internal, str);
+                        return free_source(error_internal, str);
                     }
+                    state = state_string;
                 }
                 break;
 
@@ -599,7 +626,7 @@ int get_token(Token *token, tStack *stack) {
                     c = '\'';
                     if (!add_char_to_lexem_string(str, c))
                     {
-                        free_source(error_internal, str);
+                        return free_source(error_internal, str);
                     }
                     state = state_string;
                 }
@@ -608,7 +635,7 @@ int get_token(Token *token, tStack *stack) {
                     c = '\"';
                     if (!add_char_to_lexem_string(str, c))
                     {
-                        free_source(error_internal, str);
+                        return free_source(error_internal, str);
                     }
                     state = state_string;
                 }
@@ -617,7 +644,7 @@ int get_token(Token *token, tStack *stack) {
                     c = '\t';
                     if (!add_char_to_lexem_string(str, c))
                     {
-                        free_source(error_internal, str);
+                        return free_source(error_internal, str);
                     }
                         state = state_string;
                 }
@@ -626,7 +653,7 @@ int get_token(Token *token, tStack *stack) {
                     c = '\\';
                     if (!add_char_to_lexem_string(str, c))
                     {
-                        free_source(error_internal, str);
+                        return free_source(error_internal, str);
                     }
                     state = state_string;
                 }
@@ -641,7 +668,6 @@ int get_token(Token *token, tStack *stack) {
                     {
                         return free_source(error_internal, str);
                     }
-
                     if (!add_char_to_lexem_string(str, c))
                     {
                         return free_source(error_internal, str);
@@ -656,7 +682,6 @@ int get_token(Token *token, tStack *stack) {
                 if ((c >= '0' && c <= '9') || (c >= 'A' && c <= 'F') || (c >= 'a' && c <= 'f'))
                 {
                     hex_number[0] = c;
-                    char bad_esc = c;
                     c = (char) getc(source_file);
 
                     if((c >= '0' && c <= '9') || (c >= 'A' && c <= 'F') || (c >= 'a' && c <= 'f'))
@@ -686,22 +711,7 @@ int get_token(Token *token, tStack *stack) {
                         }
                         else
                         {
-                            state = state_string;
-                        }
-                        char tmp = '\\';
-                        char tmp2 = 'x';
-                        ungetc(c, source_file);
-                        if (!add_char_to_lexem_string(str, tmp))
-                        {
-                            return free_source(error_internal, str);
-                        }
-                        if (!add_char_to_lexem_string(str, tmp2))
-                        {
-                            return free_source(error_internal, str);
-                        }
-                        if (!add_char_to_lexem_string(str, bad_esc))
-                        {
-                            return free_source(error_internal, str);
+                            return free_source(error_lexical, str);
                         }
                     }
                 }
@@ -766,7 +776,6 @@ int get_token(Token *token, tStack *stack) {
                 }
                 else
                 {
-                    ungetc(c, source_file);
                     return free_source(error_lexical, str);
                 }
 
@@ -777,21 +786,9 @@ int get_token(Token *token, tStack *stack) {
                     indentation_count++; // Counting white spaces before first no white char
                     state = state_EOL;
                 }
-                else if(c == '\n' || c == '\r')
-                {
-                    indentation_count = 0;
-                    if (c == '\n')
-                    {
-                        ungetc(c, source_file);
-                        state = state_start;
-                    }
-                    else
-                    {
-                        state = state_start;
-                    }
-                }
                 else
                 {
+                    // States for indentation...
                     if(stackEmpty(stack) == 0)
                     {
                         stackTop(stack, &stack_top_char);
@@ -804,6 +801,7 @@ int get_token(Token *token, tStack *stack) {
                         indentation_flag = false;
                         state = state_start;
                     }
+                    // Indent
                     else if(indentation_count > stack_top_char ) // If new identation is greater then push it to stack
                     {
                         stackPush(stack, indentation_count);
@@ -814,27 +812,10 @@ int get_token(Token *token, tStack *stack) {
                         token->type = token_type_indent;
                         return free_source(token_scan_accepted, str);
                     }
-                    else if(indentation_count < stack_top_char) // Came dedent so we will poping characters from stack
+                    else // Came dedent so we will poping characters from stack
                     {
                         if(stackEmpty(stack) == 1 && indentation_count > 0)
                         {
-                            indentation_count = 0;
-                            dedent_flag = false;
-                            indentation_flag = false;
-                            return free_source(error_lexical, str);
-                        }
-                        if(indentation_count == stack_top_char)
-                        {
-                            ungetc(c, source_file);
-                            dedent_flag = false;
-                            indentation_flag = false;
-                            indentation_count = 0;
-                            token->type = token_type_dedent;
-                            return free_source(token_scan_accepted, str);
-                        }
-                        else if(indentation_count > stack_top_char)
-                        {
-                            ungetc(c,source_file);
                             indentation_count = 0;
                             dedent_flag = false;
                             indentation_flag = false;
@@ -849,6 +830,10 @@ int get_token(Token *token, tStack *stack) {
                             token->type = token_type_dedent;
                             return free_source(token_scan_accepted, str);
                         }
+                        else
+                        {
+                            return free_source(error_lexical, str);
+                        }
                     }
                 }
                 break;
@@ -861,7 +846,6 @@ int get_token(Token *token, tStack *stack) {
                 }
                 else
                 {
-                    ungetc(c , source_file);
                     return free_source(error_lexical, str);
                 }
                 break;
@@ -875,7 +859,6 @@ int get_token(Token *token, tStack *stack) {
                 }
                 else
                 {
-                    ungetc(c , source_file);
                     return free_source(error_lexical, str);
                 }
                 break;
@@ -888,7 +871,6 @@ int get_token(Token *token, tStack *stack) {
                 }
                 else
                 {
-                    ungetc(c , source_file);
                     return free_source(error_lexical, str);
                 }
                 break;
@@ -907,7 +889,6 @@ int get_token(Token *token, tStack *stack) {
                 }
                 else
                 {
-                    ungetc(c , source_file);
                     return free_source(error_lexical, str);
                 }
                 break;
