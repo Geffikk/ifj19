@@ -368,7 +368,7 @@ static Rule_enumeration check_Rule (Expression_stack_entry* first_operand, Expre
         {
             if (second_operand->symbol == SYMBOL_EQUAL)
             {
-                return RULE_EQUAL;
+                return RULE_EQUAL; // rule E -> E = E
             }
             else if (second_operand->symbol == SYMBOL_NOT_EQUAL)
             {
@@ -499,6 +499,14 @@ static int semantic_test (Expression_stack_entry* first_operand, Expression_stac
             if (second_operand == NULL)
             {
                 return error_internal;
+            }
+            else if(data->in_function == true && data->left_side_id != NULL)
+            {
+                Gen_type_control(Term_adjustment(data->left_side_id->identifier,4),Term_adjustment(data->token.attribute.s->string,4));
+            }
+            else
+            {
+                //return (error_semantic_compatibility);   //error4
             }
         }
         else

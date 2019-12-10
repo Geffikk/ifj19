@@ -33,14 +33,7 @@ void sym_table_init(Sym_table *table)
         (*table)[i] = NULL;
         i++;
     }
-	/*
-	for (int i = 0; i < MAX_SYMTABLE_SIZE; i++)
-	{
-		(*table)[i] = NULL;
-	}
-	 */
 }
-
 
 TData *sym_table_add_symbol(Sym_table *table, const char *key, bool* malloc_failed)
 {
@@ -114,7 +107,6 @@ TData *sym_table_add_symbol(Sym_table *table, const char *key, bool* malloc_fail
 	return &new_entry->data;
 }
 
-
 bool sym_table_add_parameter(TData *data, int data_type)
 {
 	if (data == NULL){
@@ -151,13 +143,8 @@ bool sym_table_add_parameter(TData *data, int data_type)
         }
     }
 
-
-
-
-	
 	return true;
 }
-
 
 TData *sym_table_search(Sym_table *table, const char *key)
 {
@@ -181,8 +168,6 @@ TData *sym_table_search(Sym_table *table, const char *key)
 
 	return NULL;
 }
-
-
 
 void sym_table_free(Sym_table *table)
 {

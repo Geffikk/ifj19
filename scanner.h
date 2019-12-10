@@ -77,8 +77,8 @@ typedef enum
 
 /** Attributes of TOKEN **/
 typedef struct{
-    int int_number;
-    float float_number;
+    char* int_number;
+    char* float_number;
     Lexem_string *s;
     Keywords keyword;
 } token_attributes;
