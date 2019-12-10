@@ -2,8 +2,7 @@
 /************************ EXPRESSION_STACK *************************
  * @author : Martin Valach <xvalac12@stud.fit.vutbr.cz>
  * Subject : IFJ
- * Project : Compiler implementation imperativ language IFJ
- * @brief : Expression stack header
+
 ***********************************************************/
 #ifndef _EXPRESSION_STACK_H
 #define _EXPRESSION_STACK_H
