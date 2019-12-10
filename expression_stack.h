@@ -1,17 +1,13 @@
 
-/************************ EXPRESSION_STACK *************************
+/************************ EXPRESSION_STACK HEADER *************************
  * @author : Martin Valach <xvalac12@stud.fit.vutbr.cz>
- * Subject : IFJ
- * Project : Compiler implementation imperativ language IFJ
- * @brief : Expression stack header
-***********************************************************/
+**************************************************************************/
 #ifndef _EXPRESSION_STACK_H
 #define _EXPRESSION_STACK_H
 
 
 #include <stdbool.h>
-
-#include "expression.h"
+#include "parser.h"
 #include "symtable.h"
 
 
@@ -20,27 +16,71 @@ typedef struct stack_item
 	Symbol_enumeration symbol;
 	Data_type data_type;
 	struct stack_item *next;
-} Expression_stack_entry;
+}
+Expression_stack_entry;
 
 typedef struct
 {
-	Expression_stack_entry *top;
-} Expression_stack;
+    Expression_stack_entry *top; /// entry on stack top
+}
+Expression_stack;
 
-void Expression_stack_init(Expression_stack* stack);
+/** Function for initialization of stack
+ *
+ *  @param expr_stack - stack pointer
+ ***/
+void Expression_stack_init(Expression_stack* expr_stack);
 
-bool Expression_stack_push(Expression_stack* stack, Symbol_enumeration symbol, Data_type type);
+/** Function for return symbol on top of stack
+ *
+ *  @param expr_stack - stack pointer
+ *  @return pointer to stack top
+ ***/
+Expression_stack_entry* Expression_stack_top(Expression_stack* expr_stack);
 
-bool Expression_stack_pop(Expression_stack* stack);
+/** Function for return symbol on top of stack
+ *
+ *  @param expr_stack - stack pointer
+ *  @return count of symbols poped
+ ***/
+bool Expression_stack_pop(Expression_stack* expr_stack);
 
-void Expression_stack_count_of_pop(Expression_stack* stack, int count);
+/** Function for return symbol on top of stack
+ *
+ *  @param expr_stack - stack pointer
+ *  @param count - count of symbols poped
+ ***/
+void Expression_stack_count_of_pop(Expression_stack* expr_stack, int count);
 
-Expression_stack_entry* Expression_stack_top_ter(Expression_stack* stack);
+/** Function for pushing symbol on stack
+ *
+ *  @param expr_stack - stack pointer
+ *  @param type - data type for pushed symbol
+ *  @param symbol - pushed symbol
+ *  @return pointer to stack top
+ ***/
+bool Expression_stack_push (Expression_stack* expr_stack, Data_type type, Symbol_enumeration symbol);
 
-bool Expression_stack_insert_after_top_ter(Expression_stack* stack, Symbol_enumeration symbol, Data_type type);
+/** Function for implementation shift of operands in expression by precedence algorithm
+ *
+ *  @param expr_stack - stack pointer
+ *  @return pointer to top ter
+ ***/
+Expression_stack_entry* Expression_stack_top_ter(Expression_stack* expr_stack);
 
-Expression_stack_entry* Expression_stack_top(Expression_stack* stack);
+/** Function for pushing symbol on stack
+*
+*  @param expr_stack - stack pointer
+*  @param type - data type for pushed symbol
+*  @param symbol - pushed symbol
+*  @return bool value
+***/
+bool Expression_stack_after_top_ter(Expression_stack* expr_stack, Data_type type, Symbol_enumeration symbol);
 
-void Expression_stack_free(Expression_stack* stack);
+/** Function for free of all used resources
+ *
+ *  @param expr_stack - stack pointer
+ ***/
+void Expression_stack_free(Expression_stack* expr_stack);
 
 #endif
