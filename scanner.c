@@ -423,11 +423,12 @@ int get_token(Token *token, tStack *stack) {
             case (state_comment):
 
                 // scanner analyzed end of line comment
-                if (c == '\n' && documentation_flag == false)
+                if ((c == '\n' || c == EOF) && documentation_flag == false)
                 {
                     // EOL return to source file and set state_start (i dont need line comment token)
                     ungetc(c, source_file);
                     state = state_start;
+                    break;
                 }
                 // Line comment && Doc. String have to end with (\n or """) so when EOF then error
                 else if (c == EOF)
