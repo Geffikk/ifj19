@@ -14,9 +14,6 @@
 #include "lexem_string.h"
 
 
-#define GEN_CHAR(code) \
-	if ( !add_char_to_lexem_string(&IFJcode19, code) ) return false
-
 #define GEN_EOL() \
 	if ( !add_string_to_lexem_string(&IFJcode19, "\n") ) return false
 
@@ -43,11 +40,11 @@ bool Gen_Start () {
 	GEN_CONST_STRING_AND_EOL("JUMP ?_main"); GEN_EOL();
 
 
-	////////////		VESTAVENE FUNKCE
+	////////////		BUILD-IN FUNCTIONS
 
 	GEN_CONST_STRING_AND_EOL("######################    build-in functions    ######################");
 
-	// Vstavana fukcia print
+	// Build-in function print
 	GEN_CONST_STRING_AND_EOL("# build-in function print");
 	GEN_CONST_STRING_AND_EOL("LABEL print");
 	GEN_CONST_STRING_AND_EOL("DEFVAR LF@s");
@@ -63,25 +60,25 @@ bool Gen_Start () {
 	GEN_CONST_STRING_AND_EOL("MOVE LF@%retval nil@nil");
 	GEN_CONST_STRING_AND_EOL("RETURN"); GEN_EOL();
 
-	// Vstavana fukcia inputs
+	// Build-in function inputs
 	GEN_CONST_STRING_AND_EOL("# build-in function inputs");
 	GEN_CONST_STRING_AND_EOL("LABEL inputs");
 	GEN_CONST_STRING_AND_EOL("READ LF@%retval string");
 	GEN_CONST_STRING_AND_EOL("RETURN"); GEN_EOL();
 
-	// Vstavana fukcia inputi
+	// Build-in function inputi
 	GEN_CONST_STRING_AND_EOL("# build-in function inputi");
 	GEN_CONST_STRING_AND_EOL("LABEL inputi");
 	GEN_CONST_STRING_AND_EOL("READ LF@%retval int");
 	GEN_CONST_STRING_AND_EOL("RETURN"); GEN_EOL();
 
-	// Vstavana fukcia inputf
+	// Build-in function inputf
 	GEN_CONST_STRING_AND_EOL("# build-in function inputf");
 	GEN_CONST_STRING_AND_EOL("LABEL inputf");
 	GEN_CONST_STRING_AND_EOL("READ LF@%retval float");
 	GEN_CONST_STRING_AND_EOL("RETURN"); GEN_EOL();
 
-	// Vstavana fukcia len
+	// Build-in function len
 	GEN_CONST_STRING_AND_EOL("# build-in function len");
 	GEN_CONST_STRING_AND_EOL("LABEL len");
 	GEN_CONST_STRING_AND_EOL("DEFVAR LF@s");
@@ -89,7 +86,7 @@ bool Gen_Start () {
 	GEN_CONST_STRING_AND_EOL("STRLEN LF@%retval LF@s");
 	GEN_CONST_STRING_AND_EOL("RETURN"); GEN_EOL();
 
-	// Vstavana fukcia substr
+	// Build-in function substr
 	GEN_CONST_STRING_AND_EOL("# build-in function substr");
 	GEN_CONST_STRING_AND_EOL("LABEL substr");
 	GEN_CONST_STRING_AND_EOL("DEFVAR LF@n");
@@ -134,7 +131,7 @@ bool Gen_Start () {
 	GEN_CONST_STRING_AND_EOL("LABEL ?_while_end");
 	GEN_CONST_STRING_AND_EOL("RETURN"); GEN_EOL();
 
-	// Vstavana fukcia ord
+	// Build-in function ord
 	GEN_CONST_STRING_AND_EOL("# build-in function ord");
 	GEN_CONST_STRING_AND_EOL("LABEL ord");
 	GEN_CONST_STRING_AND_EOL("DEFVAR LF@i");
@@ -162,7 +159,7 @@ bool Gen_Start () {
 	GEN_CONST_STRING_AND_EOL("STRI2INT LF@%retval LF@%retval int@0");
 	GEN_CONST_STRING_AND_EOL("RETURN"); GEN_EOL();
 
-	// Vstavana fukcia chr
+	// Build-in function chr
 	GEN_CONST_STRING_AND_EOL("# build-in function chr");
 	GEN_CONST_STRING_AND_EOL("LABEL chr");
 	GEN_CONST_STRING_AND_EOL("DEFVAR LF@i");
@@ -178,14 +175,9 @@ bool Gen_Start () {
 	return true;
 }
 
-bool Gen_Finish () {
-	GEN_STRING("EXIT int@0");
-	return true;
-}
-
 char* Term_adjustment (const char *term, const int type) {
 
-	static char new_term[1000]; // max + 7
+	static char new_term[1000];
 	
 	switch (type) {
 		case INT :
@@ -331,13 +323,14 @@ bool Gen_save_expr_or_retval (const char *var_id) {
 
 	GEN_STRING("POPS ");
 	GEN_STRING(var_id); GEN_EOL();
-	GEN_CONST_STRING_AND_EOL("CLEARS"); // Priebezne cistenie zabudnutych vyrazov
+	GEN_CONST_STRING_AND_EOL("CLEARS"); // Preventive stack clear
 
 	return true;
 }
 
 bool Gen_string_concat () {
 
+	GEN_CONST_STRING_AND_EOL("# string concat");
 	GEN_CONST_STRING_AND_EOL("POPS GF@%tmp1");
 	GEN_CONST_STRING_AND_EOL("POPS GF@%tmp2");
 	GEN_CONST_STRING_AND_EOL("CONCAT GF@%tmp2 GF@%tmp2 GF@%tmp1");
@@ -353,9 +346,9 @@ bool Gen_type_control () {
 	GEN_CONST_STRING_AND_EOL("# type control");
 	GEN_CONST_STRING_AND_EOL("POPS GF@%tmp1");
 	GEN_CONST_STRING_AND_EOL("POPS GF@%tmp2");
-	GEN_CONST_STRING_AND_EOL("TYPE GF@%tmp3 GF@%tmp2"); // v tmp3 je typ spodneho (laveho)
+	GEN_CONST_STRING_AND_EOL("TYPE GF@%tmp3 GF@%tmp2");
 	GEN_CONST_STRING_AND_EOL("PUSHS GF@%tmp2");
-	GEN_CONST_STRING_AND_EOL("TYPE GF@%tmp2 GF@%tmp1"); // v tmp2 je typ horneho (praveho)
+	GEN_CONST_STRING_AND_EOL("TYPE GF@%tmp2 GF@%tmp1");
 	GEN_CONST_STRING_AND_EOL("PUSHS GF@%tmp1");
 	GEN_CONST_STRING_AND_EOL("EQ GF@%tmp1 GF@%tmp2 GF@%tmp3");
 	GEN_STRING("JUMPIFEQ ?_type_control_");
@@ -389,17 +382,6 @@ bool Gen_type_control () {
 	GEN_INT(i); GEN_EOL();
 	GEN_STRING("LABEL ?_type_control3_");
 	GEN_INT(i); GEN_EOL();
-	GEN_CONST_STRING_AND_EOL("EQ GF@%tmp1 GF@%tmp2 string@nil");
-	GEN_STRING("JUMPIFEQ ?_type_control4_");
-	GEN_INT(i); GEN_EOL();
-	GEN_CONST_STRING_AND_EOL("GF@%tmp1 bool@false");
-	GEN_CONST_STRING_AND_EOL("EXIT int@4");
-	GEN_STRING("LABEL ?_type_control4_");
-	GEN_INT(i); GEN_EOL();
-	GEN_CONST_STRING_AND_EOL("EQ GF@%tmp1 GF@%tmp3 string@nil");
-	GEN_STRING("JUMPIFEQ ?_type_control_");
-	GEN_INT(i); GEN_EOL();
-	GEN_CONST_STRING_AND_EOL("GF@%tmp1 bool@false");
 	GEN_CONST_STRING_AND_EOL("EXIT int@4");
 	GEN_STRING("LABEL ?_type_control_");
 	GEN_INT(i); GEN_EOL();
@@ -412,6 +394,22 @@ bool Gen_type_control () {
 bool Gen_expr_calc (Rule_enumeration rule, bool in_function) {
 
 	static unsigned long int i = 0;
+
+	if ( in_function && (rule != RULE_PLUS) ) {
+
+		GEN_CONST_STRING_AND_EOL("POPS GF@%tmp1");
+		GEN_CONST_STRING_AND_EOL("TYPE GF@%tmp2 GF@%tmp1");
+		GEN_CONST_STRING_AND_EOL("EQ GF@%tmp2 GF@%tmp2 string@string");
+		GEN_STRING("JUMPIFEQ ?_is_it_too_tired_to_think_about_name_");
+		GEN_INT(i);
+		GEN_CONST_STRING_AND_EOL(" GF@%tmp2 bool@false");
+		GEN_CONST_STRING_AND_EOL("EXIT int@4");
+		GEN_STRING("LABEL ?_is_it_too_tired_to_think_about_name_");
+		GEN_INT(i); GEN_EOL();
+		GEN_CONST_STRING_AND_EOL("PUSHS GF@%tmp1");
+
+		i++;
+	}
 
 	switch (rule) {
 
@@ -456,9 +454,14 @@ bool Gen_expr_calc (Rule_enumeration rule, bool in_function) {
 			GEN_CONST_STRING_AND_EOL("GTS");
 			break;
 
+		case RULE_MINUS :
+			GEN_CONST_STRING_AND_EOL("SUBS");
+			break;
+
 		case RULE_PLUS :
 
 			if ( in_function ) {
+				GEN_CONST_STRING_AND_EOL("# string concat");
 				GEN_CONST_STRING_AND_EOL("POPS GF@%tmp1");
 				GEN_CONST_STRING_AND_EOL("TYPE GF@%tmp2 GF@%tmp1");
 				GEN_CONST_STRING_AND_EOL("PUSHS GF@%tmp1");
@@ -537,7 +540,6 @@ bool Gen_expr_calc (Rule_enumeration rule, bool in_function) {
 				GEN_INT(i);
 				GEN_CONST_STRING_AND_EOL(" GF@%tmp2 bool@false");
 				GEN_CONST_STRING_AND_EOL("EXIT int@4");
-				GEN_CONST_STRING_AND_EOL("DPRINT int@4");
 				GEN_STRING("LABEL ?_is_it_float_");
 				GEN_INT(i); GEN_EOL();
 				GEN_CONST_STRING_AND_EOL("PUSHS GF@%tmp1");
@@ -565,9 +567,9 @@ bool Gen_expr_calc (Rule_enumeration rule, bool in_function) {
 	return true;
 }
 
-bool Gen_if_head () {
+unsigned long int Gen_if_head () {
 
-	static unsigned long int i = 0;
+	static unsigned long int i = 1;
 
 	GEN_CONST_STRING_AND_EOL("# if head");
 	GEN_CONST_STRING_AND_EOL("POPS GF@%expr_result");
@@ -575,14 +577,12 @@ bool Gen_if_head () {
 	GEN_INT(i);
 	GEN_CONST_STRING_AND_EOL(" GF@%expr_result bool@false");
 
-	i++;
-
-	return true;
+	return i++;
 }
 
-bool Gen_else_head () {
+unsigned long int Gen_else_head () {
 
-	static unsigned long int i = 0;
+	static unsigned long int i = 1;
 
 	GEN_CONST_STRING_AND_EOL("# else head");
 	GEN_STRING("JUMP ?_else_end_");
@@ -590,14 +590,12 @@ bool Gen_else_head () {
 	GEN_STRING("LABEL ?_else_");
 	GEN_INT(i); GEN_EOL();
 
-	i++;
-
-	return true;
+	return i++;
 }
 
 bool Gen_else_foot () {
 
-	static unsigned long int i = 0;
+	static unsigned long int i = 1;
 
 	GEN_CONST_STRING_AND_EOL("# else foot");
 	GEN_STRING("LABEL ?_else_end_");
@@ -663,7 +661,7 @@ bool Gen_function_def_head (const char *fun_id) {
 	return true;
 }
 
-bool Gen_pop_arg (const char *term) { // popuje sa od konca
+bool Gen_pop_arg (const char *term) { // popuje sa o
 
 	GEN_CONST_STRING_AND_EOL("# pop (pass) function's argument");
 	GEN_STRING("DEFVAR ");
@@ -675,7 +673,7 @@ bool Gen_pop_arg (const char *term) { // popuje sa od konca
 	return true;
 }
 
-bool Gen_function_def_foot (const char *fun_id) {
+bool Gen_function_def_foot (const char *fun_id) { // arguments are poped in reverse order
 	
 	GEN_CONST_STRING_AND_EOL("# function foot");
 	GEN_CONST_STRING_AND_EOL("MOVE LF@%retval nil@nil");
@@ -687,7 +685,7 @@ bool Gen_function_def_foot (const char *fun_id) {
 	return true;
 }
 
-bool Gen_push_arg (const char *term) { // pushuje sa od zaciatku
+bool Gen_push_arg (const char *term) { // arguments are pushed from the beginning
 
 	GEN_CONST_STRING_AND_EOL("# push function's argument");
 	GEN_STRING("PUSHS ");
@@ -712,21 +710,3 @@ bool Gen_function_call (const char *fun_id) {
 
 	return true;
 }
-
-// (string == float) == false (odsek 5.1) zaroven aj None sa tu mozno moze nachadat
-// return bez vyrazu vracia none
-// DEFVAR v if-else
-// a * b / c + d (vsetko integere) tento vyraz nefunguje tam delenie parserom to prejde ale ja to nepretypujem musim vo funkciach riesit aj to
-// + otestovat tie typove kontroly ak sa predaju argumenty zleho typu
-// od gen_expr_calc() vyssie skontrolovat ci sa neprelinaju tmpX a nemozu sa prepisovat navzajom
-// kontrola premennych vo vyrazoch vo funkci ci su definovane - mato a patres
-// matovy nefunguju minuska
-// #nemoze koncit komentarom program inak chyba 1 - maros
-// mato hovoril nieco so string concat
-// doplnit DPRINT
-
-// prejist cele zadanie
-// skontrolovat cely projekt + dokumentacia
-// prejst forum
-// dat prec vsetky DPRINT (alebo ich tam nechat???)
-// make aby bral aj warningy
