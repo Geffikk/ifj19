@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.14159265-2.6-1.40.18 (TeX Live 2017/Debian) (preloaded format=pdflatex 2019.11.25)  25 NOV 2019 15:09
+This is pdfTeX, Version 3.14159265-2.6-1.40.18 (TeX Live 2017/Debian) (preloaded format=pdflatex 2019.11.25)  11 DEC 2019 22:34
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -689,11 +689,11 @@ been already used, duplicate ignored
                    \relax 
 l.52     \clearpage
                     [1]
-<inc/picture1.png, id=16, 852.18375pt x 460.72125pt>
-File: inc/picture1.png Graphic file (type png)
-<use inc/picture1.png>
-Package pdftex.def Info: inc/picture1.png  used on input line 67.
-(pdftex.def)             Requested size: 852.18166pt x 460.72012pt.
+<inc/IFJ19.jpg, id=16, 693.59125pt x 482.80376pt>
+File: inc/IFJ19.jpg Graphic file (type jpg)
+<use inc/IFJ19.jpg>
+Package pdftex.def Info: inc/IFJ19.jpg  used on input line 67.
+(pdftex.def)             Requested size: 693.58955pt x 482.80258pt.
 LaTeX Font Info:    Font shape `OT1/ptm/bx/n' in size <12> not available
 (Font)              Font shape `OT1/ptm/b/n' tried instead on input line 70.
 LaTeX Font Info:    Try loading font information for OT1+pcr on input line 72.
@@ -712,49 +712,61 @@ been already used, duplicate ignored
 l.79 
       [1
 
- <./inc/picture1.png>]
-LaTeX Font Info:    Font shape `OT1/ptm/bx/n' in size <10.95> not available
-(Font)              Font shape `OT1/ptm/b/n' tried instead on input line 86.
-LaTeX Font Info:    Try loading font information for OMS+ptm on input line 88.
-
-(/usr/share/texlive/texmf-dist/tex/latex/psnfss/omsptm.fd
-File: omsptm.fd 
-)
-LaTeX Font Info:    Font shape `OMS/ptm/m/n' in size <10.95> not available
-(Font)              Font shape `OMS/cmsy/m/n' tried instead on input line 88.
-
-Overfull \hbox (2.45552pt too wide) in paragraph at lines 101--102
-\OT1/ptm/m/n/10.95 Dal[]sou []castou pre-klada[]ca je s[]emantick[]y ana-lyz[]a
-tor. Pri s[]emantickej anal[]yze sa kon-t-ro-luj[]u oper[]acie nad d[]atov[]ymi
-
- []
-
-
-Overfull \hbox (9.61768pt too wide) in paragraph at lines 109--110
+ <./inc/IFJ19.jpg>]
+Overfull \hbox (9.61768pt too wide) in paragraph at lines 94--95
 \OT1/ptm/m/n/10.95 je ulo[]zeny v in-struk[]cnom liste, ktor[]y je im-ple-men-t
 o-van[]y po-mo-cou jed-no-s-mern[]eho vi-a-zan[]eho line[]arneho zoznamu.
  []
 
 
-Overfull \hbox (8.39143pt too wide) in paragraph at lines 109--110
+Overfull \hbox (8.39143pt too wide) in paragraph at lines 94--95
 \OT1/ptm/m/n/10.95 Pre ka[]zd[]u in[]strukciu je tento k[]od re-pre-zen-to-van[
 ]y ty-pom in[]strukcie, ad-re-sou v[]ysledku a ad-re-sami prv[]eho a druh[]eho
  []
 
-[2] [3]
-<inc/scannerAutomat.png, id=48, 713.66624pt x 1056.94875pt>
-File: inc/scannerAutomat.png Graphic file (type png)
-<use inc/scannerAutomat.png>
-Package pdftex.def Info: inc/scannerAutomat.png  used on input line 163.
-(pdftex.def)             Requested size: 713.66449pt x 1056.94617pt.
-Package atveryend Info: Empty hook `BeforeClearDocument' on input line 166.
- [4
+[2]
+Overfull \hbox (13.16493pt too wide) in paragraph at lines 110--112
+\OT1/ptm/m/n/10.95 Tabul[]ku sym-bo-lov sme im-ple-men-to-vali ako ta-bul[]ku s
+ rozpt[]ylen[]ymi polo[]zkami(hash function). Ked[][]ze rozli[]sujeme,
+ []
 
- <./inc/scannerAutomat.png>]
-Package atveryend Info: Empty hook `AfterLastShipout' on input line 166.
+LaTeX Font Info:    Font shape `OT1/ptm/bx/n' in size <10.95> not available
+(Font)              Font shape `OT1/ptm/b/n' tried instead on input line 122.
+[3] [4]
+<inc/scanner.png, id=47, 703.62875pt x 999.735pt>
+File: inc/scanner.png Graphic file (type png)
+<use inc/scanner.png>
+Package pdftex.def Info: inc/scanner.png  used on input line 147.
+(pdftex.def)             Requested size: 703.62703pt x 999.73256pt.
+ [5
+
+ <./inc/scanner.png>]
+<inc/table.png, id=58, 604.2575pt x 588.1975pt>
+File: inc/table.png Graphic file (type png)
+<use inc/table.png>
+Package pdftex.def Info: inc/table.png  used on input line 158.
+(pdftex.def)             Requested size: 604.25603pt x 588.19606pt.
+ [6 <./inc/table.png>]
+
+pdfTeX warning: pdflatex (file ./inc/LL-gramatika.pdf): PDF inclusion: found PD
+F version <1.7>, but at most version <1.5> allowed
+<inc/LL-gramatika.pdf, id=66, 597.432pt x 845.07718pt>
+File: inc/LL-gramatika.pdf Graphic file (type pdf)
+<use inc/LL-gramatika.pdf>
+Package pdftex.def Info: inc/LL-gramatika.pdf  used on input line 170.
+(pdftex.def)             Requested size: 597.43054pt x 845.07512pt.
+[7 <./inc/LL-gramatika.pdf>]
+<inc/LL_tablee.png, id=89, 518.93875pt x 469.755pt>
+File: inc/LL_tablee.png Graphic file (type png)
+<use inc/LL_tablee.png>
+Package pdftex.def Info: inc/LL_tablee.png  used on input line 179.
+(pdftex.def)             Requested size: 518.93748pt x 469.75386pt.
+Package atveryend Info: Empty hook `BeforeClearDocument' on input line 183.
+ [8 <./inc/LL_tablee.png>]
+Package atveryend Info: Empty hook `AfterLastShipout' on input line 183.
  (./dokumentacia.aux)
-Package atveryend Info: Executing hook `AtVeryEndDocument' on input line 166.
-Package atveryend Info: Executing hook `AtEndAfterFileList' on input line 166.
+Package atveryend Info: Executing hook `AtVeryEndDocument' on input line 183.
+Package atveryend Info: Executing hook `AtEndAfterFileList' on input line 183.
 
 
 Package rerunfilecheck Warning: File `dokumentacia.out' has changed.
@@ -763,27 +775,26 @@ Package rerunfilecheck Warning: File `dokumentacia.out' has changed.
 
 Package rerunfilecheck Info: Checksums for `dokumentacia.out':
 (rerunfilecheck)             Before: <no file>
-(rerunfilecheck)             After:  E607B599722FC4F0509B0FA7A49957E0;2190.
-Package atveryend Info: Empty hook `AtVeryVeryEnd' on input line 166.
+(rerunfilecheck)             After:  4482DF053CE28856E2BE6BD75289FDA7;2508.
+Package atveryend Info: Empty hook `AtVeryVeryEnd' on input line 183.
  ) 
 Here is how much of TeX's memory you used:
- 10164 strings out of 492982
- 141048 string characters out of 6134895
- 225518 words of memory out of 5000000
- 13615 multiletter control sequences out of 15000+600000
+ 10165 strings out of 492982
+ 141034 string characters out of 6134895
+ 226518 words of memory out of 5000000
+ 13606 multiletter control sequences out of 15000+600000
  28549 words of font info for 56 fonts, out of 8000000 for 9000
  1141 hyphenation exceptions out of 8191
- 28i,9n,31p,739b,349s stack positions out of 5000i,500n,10000p,200000b,80000s
+ 28i,9n,31p,878b,349s stack positions out of 5000i,500n,10000p,200000b,80000s
 {/usr/share/texlive/texmf-dist/fonts/enc/dvips/base/8r.enc}</usr/share/texliv
 e/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi12.pfb></usr/share/texlive/texm
-f-dist/fonts/type1/public/amsfonts/cm/cmsy10.pfb></usr/share/texlive/texmf-dist
-/fonts/type1/urw/courier/ucrr8a.pfb></usr/share/texlive/texmf-dist/fonts/type1/
-urw/times/utmb8a.pfb></usr/share/texlive/texmf-dist/fonts/type1/urw/times/utmr8
-a.pfb>
-Output written on dokumentacia.pdf (6 pages, 212200 bytes).
+f-dist/fonts/type1/urw/courier/ucrr8a.pfb></usr/share/texlive/texmf-dist/fonts/
+type1/urw/times/utmb8a.pfb></usr/share/texlive/texmf-dist/fonts/type1/urw/times
+/utmr8a.pfb>
+Output written on dokumentacia.pdf (10 pages, 334761 bytes).
 PDF statistics:
- 80 PDF objects out of 1000 (max. 8388607)
- 62 compressed objects within 1 object stream
- 23 named destinations out of 1000 (max. 500000)
- 11 words of extra memory for PDF output out of 10000 (max. 10000000)
+ 121 PDF objects out of 1000 (max. 8388607)
+ 94 compressed objects within 1 object stream
+ 33 named destinations out of 1000 (max. 500000)
+ 26 words of extra memory for PDF output out of 10000 (max. 10000000)
 
