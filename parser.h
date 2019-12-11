@@ -1,6 +1,6 @@
 
-/************************* Syntactic and semantic analisis *************************
- * @author : Patrik Tomov <xtomov0200@stud.fit.vutbr.cz>
+/************************* Syntactic and semantic analysis *************************
+ * @author : Patrik Tomov <xtomov02@stud.fit.vutbr.cz>
  * @author : Martin Valach <xvalac12@stud.fit.vutbr.cz>
 ***********************************************************/
 
@@ -31,12 +31,15 @@ typedef enum
     INDEX_MORE_EQUAL,               // index for >=                         3
     INDEX_LESS,                     // index for <                          4
     INDEX_MORE,                     // index for >                          5
-    INDEX_PLUS_OR_MINUS,			// index for +, - 			            6
-    INDEX_MULTIPLY_OR_DIVIDE,		// index for *, /, // 			        7
-    INDEX_RIGHT_BRACKET,			// index for ) 				            8
-    INDEX_LEFT_BRACKET,			    // index for ( 				            9
-    INDEX_DATA,				        // index for identifier and data types 	10
-    INDEX_DOLLAR				    // index for $				            11
+    INDEX_PLUS,        			    // index for +			                6
+    INDEX_MINUS,		        	// index for -			                7
+    INDEX_MULTIPLY,         		// index for *      			        8
+    INDEX_DIVIDE,	            	// index for /              	        9
+    INDEX_DIVIDE_INTEGER,   		// index for // 	                    10
+    INDEX_RIGHT_BRACKET,			// index for ) 				            11
+    INDEX_LEFT_BRACKET,			    // index for ( 				            12
+    INDEX_DATA,				        // index for identifier and data types 	13
+    INDEX_DOLLAR				    // index for $				            14
 }
 Index_enumeration;
 
@@ -83,7 +86,7 @@ typedef enum
     RULE_DIVIDE,		// RULE E -> E / E	    10
     RULE_DIVIDE_INT,	// RULE E -> E // E 	11
     RULE_BRACKETS,		// RULE E -> (E)		12
-    RULE_NOT_DEFINED	// not a kwnown rule    13
+    RULE_NOT_DEFINED	// not a known rule    13
 }
 Rule_enumeration;
 
