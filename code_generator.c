@@ -13,8 +13,6 @@
 #include "code_generator.h"
 #include "lexem_string.h"
 
-Lexem_string IFJcode19;
-
 
 #define GEN_CHAR(code) \
 	if ( !add_char_to_lexem_string(&IFJcode19, code) ) return false
@@ -39,6 +37,8 @@ bool Gen_Start () {
 	GEN_CONST_STRING_AND_EOL("DEFVAR GF@%expr_result");
 	GEN_CONST_STRING_AND_EOL("DEFVAR GF@%tmp1");
 	GEN_CONST_STRING_AND_EOL("DEFVAR GF@%tmp2");
+	GEN_CONST_STRING_AND_EOL("DEFVAR GF@%tmp3");
+	GEN_CONST_STRING_AND_EOL("DEFVAR GF@%tmp4"); GEN_EOL();
 
 	GEN_CONST_STRING_AND_EOL("JUMP ?_main"); GEN_EOL();
 
@@ -52,7 +52,14 @@ bool Gen_Start () {
 	GEN_CONST_STRING_AND_EOL("LABEL print");
 	GEN_CONST_STRING_AND_EOL("DEFVAR LF@s");
 	GEN_CONST_STRING_AND_EOL("POPS LF@s");
+	GEN_CONST_STRING_AND_EOL("TYPE GF@%tmp1 LF@s");
+	GEN_CONST_STRING_AND_EOL("EQ GF@%tmp1 GF@%tmp1 string@nil");
+	GEN_CONST_STRING_AND_EOL("JUMPIFEQ ?_continue_print GF@%tmp1 bool@false");
+	GEN_CONST_STRING_AND_EOL("WRITE string@None");
+	GEN_CONST_STRING_AND_EOL("JUMP ?_end_print");
+	GEN_CONST_STRING_AND_EOL("LABEL ?_continue_print");
 	GEN_CONST_STRING_AND_EOL("WRITE LF@s");
+	GEN_CONST_STRING_AND_EOL("LABEL ?_end_print");
 	GEN_CONST_STRING_AND_EOL("MOVE LF@%retval nil@nil");
 	GEN_CONST_STRING_AND_EOL("RETURN"); GEN_EOL();
 
@@ -176,39 +183,38 @@ bool Gen_Finish () {
 	return true;
 }
 
-char* Term_adjustment (char *term, const int type) {
+char* Term_adjustment (const char *term, const int type) {
 
 	static char new_term[1000]; // max + 7
 	
 	switch (type) {
-		case 0 :
+		case INT :
 			strcpy(new_term, "int@");
 			strcat(new_term, term);
 			break;
 
-		case 1 : 0; // label can be followed only by statement (declaration != statement)
+		case FLOAT : 0; // label can be followed only by statement (declaration != statement)
 			char tmp[1000];
 			strcpy(new_term, "float@");
 			sprintf(tmp, "%a", strtod(term, NULL));
 			strcat(new_term, tmp);
 			break;
 
-		case 2 :
-			strcpy(new_term, "nil@");
-			strcat(new_term, term);
+		case NONE :
+			strcpy(new_term, "nil@nil");
 			break;
 
-		case 3 :
+		case GLOBAL :
 			strcpy(new_term, "GF@");
 			strcat(new_term, term);
 			break;
 
-		case 4 :
+		case LOCAL :
 			strcpy(new_term, "LF@");
 			strcat(new_term, term);
 			break;
 			
-		case 5 :
+		case STRING :
 			strcpy(new_term, "string@");
 
 			char tmp_str[5];
@@ -340,30 +346,72 @@ bool Gen_string_concat () {
 	return true;
 }
 
-bool Gen_type_control (const char *term1, const char *term2)
-{
+bool Gen_type_control () {
 
-    static unsigned long int i = 0;
+	static unsigned long int i = 0;
 
-    GEN_CONST_STRING_AND_EOL("# type control");
-    GEN_STRING("TYPE GF@%tmp1 ");
-    GEN_STRING(term1); GEN_EOL();
-    GEN_STRING("TYPE GF@%tmp2 ");
-    GEN_STRING(term2); GEN_EOL();
-    GEN_CONST_STRING_AND_EOL("EQ GF@%tmp1 GF@%tmp1 GF@%tmp2");
-    GEN_STRING("JUMPIFEQ ?_type_");
-    GEN_INT(i);
-    GEN_CONST_STRING_AND_EOL(" GF@%tmp1 bool@true");
-    GEN_CONST_STRING_AND_EOL("EXIT int@4");
-    GEN_STRING("LABEL ?_type_");
-    GEN_INT(i); GEN_EOL();
+	GEN_CONST_STRING_AND_EOL("# type control");
+	GEN_CONST_STRING_AND_EOL("POPS GF@%tmp1");
+	GEN_CONST_STRING_AND_EOL("POPS GF@%tmp2");
+	GEN_CONST_STRING_AND_EOL("TYPE GF@%tmp3 GF@%tmp2"); // v tmp3 je typ spodneho (laveho)
+	GEN_CONST_STRING_AND_EOL("PUSHS GF@%tmp2");
+	GEN_CONST_STRING_AND_EOL("TYPE GF@%tmp2 GF@%tmp1"); // v tmp2 je typ horneho (praveho)
+	GEN_CONST_STRING_AND_EOL("PUSHS GF@%tmp1");
+	GEN_CONST_STRING_AND_EOL("EQ GF@%tmp1 GF@%tmp2 GF@%tmp3");
+	GEN_STRING("JUMPIFEQ ?_type_control_");
+	GEN_INT(i);
+	GEN_CONST_STRING_AND_EOL(" GF@%tmp1 bool@true");
+	GEN_CONST_STRING_AND_EOL("EQ GF@%tmp1 GF@%tmp2 string@float");
+	GEN_CONST_STRING_AND_EOL("EQ GF@%tmp4 GF@%tmp3 string@int");
+	GEN_STRING("JUMPIFNEQ ?_type_control2_");
+	GEN_INT(i);
+	GEN_CONST_STRING_AND_EOL(" GF@%tmp1 GF@%tmp4");
+	GEN_STRING("JUMPIFEQ ?_type_control2_");
+	GEN_INT(i);
+	GEN_CONST_STRING_AND_EOL(" GF@%tmp1 bool@false");
+	GEN_CONST_STRING_AND_EOL("POPS GF@%tmp1");
+	GEN_CONST_STRING_AND_EOL("INT2FLOATS");
+	GEN_CONST_STRING_AND_EOL("PUSHS GF@%tmp1");
+	GEN_STRING("JUMP ?_type_control_");
+	GEN_INT(i); GEN_EOL();
+	GEN_STRING("LABEL ?_type_control2_");
+	GEN_INT(i); GEN_EOL();
+	GEN_CONST_STRING_AND_EOL("EQ GF@%tmp1 GF@%tmp2 string@int");
+	GEN_CONST_STRING_AND_EOL("EQ GF@%tmp4 GF@%tmp3 string@float");
+	GEN_STRING("JUMPIFNEQ ?_type_control3_");
+	GEN_INT(i);
+	GEN_CONST_STRING_AND_EOL(" GF@%tmp1 GF@%tmp4");
+	GEN_STRING("JUMPIFEQ ?_type_control3_");
+	GEN_INT(i);
+	GEN_CONST_STRING_AND_EOL(" GF@%tmp1 bool@false");
+	GEN_CONST_STRING_AND_EOL("INT2FLOATS");
+	GEN_STRING("JUMP ?_type_control_");
+	GEN_INT(i); GEN_EOL();
+	GEN_STRING("LABEL ?_type_control3_");
+	GEN_INT(i); GEN_EOL();
+	GEN_CONST_STRING_AND_EOL("EQ GF@%tmp1 GF@%tmp2 string@nil");
+	GEN_STRING("JUMPIFEQ ?_type_control4_");
+	GEN_INT(i); GEN_EOL();
+	GEN_CONST_STRING_AND_EOL("GF@%tmp1 bool@false");
+	GEN_CONST_STRING_AND_EOL("EXIT int@4");
+	GEN_STRING("LABEL ?_type_control4_");
+	GEN_INT(i); GEN_EOL();
+	GEN_CONST_STRING_AND_EOL("EQ GF@%tmp1 GF@%tmp3 string@nil");
+	GEN_STRING("JUMPIFEQ ?_type_control_");
+	GEN_INT(i); GEN_EOL();
+	GEN_CONST_STRING_AND_EOL("GF@%tmp1 bool@false");
+	GEN_CONST_STRING_AND_EOL("EXIT int@4");
+	GEN_STRING("LABEL ?_type_control_");
+	GEN_INT(i); GEN_EOL();
 
-    i++;
+	i++;
 
-    return true;
+	return true;
 }
 
-bool Gen_expr_calc (Rule_enumeration rule) {
+bool Gen_expr_calc (Rule_enumeration rule, bool in_function) {
+
+	static unsigned long int i = 0;
 
 	switch (rule) {
 
@@ -409,10 +457,36 @@ bool Gen_expr_calc (Rule_enumeration rule) {
 			break;
 
 		case RULE_PLUS :
-			GEN_CONST_STRING_AND_EOL("ADDS");
+
+			if ( in_function ) {
+				GEN_CONST_STRING_AND_EOL("POPS GF@%tmp1");
+				GEN_CONST_STRING_AND_EOL("TYPE GF@%tmp2 GF@%tmp1");
+				GEN_CONST_STRING_AND_EOL("PUSHS GF@%tmp1");
+				GEN_CONST_STRING_AND_EOL("EQ GF@%tmp2 GF@%tmp2 string@string");
+				GEN_STRING("JUMPIFEQ ?_is_it_string_");
+				GEN_INT(i);
+				GEN_CONST_STRING_AND_EOL(" GF@%tmp2 bool@false");
+				GEN_CONST_STRING_AND_EOL("POPS GF@%tmp1");
+				GEN_CONST_STRING_AND_EOL("POPS GF@%tmp2");
+				GEN_CONST_STRING_AND_EOL("CONCAT GF@%tmp2 GF@%tmp2 GF@%tmp1");
+				GEN_CONST_STRING_AND_EOL("PUSHS GF@%tmp2");
+				GEN_STRING("JUMP ?_is_it_string2_");
+				GEN_INT(i); GEN_EOL();
+				GEN_STRING("LABEL ?_is_it_string_");
+				GEN_INT(i); GEN_EOL();
+				GEN_CONST_STRING_AND_EOL("ADDS");
+				GEN_STRING("LABEL ?_is_it_string2_");
+				GEN_INT(i); GEN_EOL();
+
+				i++;
+			}
+
+			else {
+				GEN_CONST_STRING_AND_EOL("ADDS");
+			}
+
 			break;
 
-		case RULE_MINUS :
 			GEN_CONST_STRING_AND_EOL("SUBS");
 			break;
 
@@ -421,11 +495,67 @@ bool Gen_expr_calc (Rule_enumeration rule) {
 			break;
 
 		case RULE_DIVIDE :
+
+			if ( in_function ) {
+				GEN_CONST_STRING_AND_EOL("POPS GF@%tmp1");
+				GEN_CONST_STRING_AND_EOL("TYPE GF@%tmp2 GF@%tmp1");
+				GEN_CONST_STRING_AND_EOL("EQ GF@%tmp2 GF@%tmp2 string@int");
+				GEN_CONST_STRING_AND_EOL("PUSHS GF@%tmp1");
+				GEN_STRING("JUMPIFEQ ?_is_it_int_");
+				GEN_INT(i);
+				GEN_CONST_STRING_AND_EOL(" GF@%tmp2 bool@false");
+				GEN_CONST_STRING_AND_EOL("POPS GF@%tmp2");
+				GEN_CONST_STRING_AND_EOL("INT2FLOATS");
+				GEN_CONST_STRING_AND_EOL("PUSHS GF@%tmp2");
+				GEN_CONST_STRING_AND_EOL("INT2FLOATS");
+				GEN_STRING("LABEL ?_is_it_int_");
+				GEN_INT(i); GEN_EOL();
+			}
+
+			GEN_CONST_STRING_AND_EOL("POPS GF@%tmp1");
+			GEN_CONST_STRING_AND_EOL("EQ GF@%tmp2 GF@%tmp1 float@0x0p+0");
+			GEN_STRING("JUMPIFEQ ?_is_it_zero_");
+			GEN_INT(i);
+			GEN_CONST_STRING_AND_EOL(" GF@%tmp2 bool@false");
+			GEN_CONST_STRING_AND_EOL("EXIT int@9");
+			GEN_STRING("LABEL ?_is_it_zero_");
+			GEN_INT(i); GEN_EOL();
+			GEN_CONST_STRING_AND_EOL("PUSHS GF@%tmp1");
 			GEN_CONST_STRING_AND_EOL("DIVS");
+
+			i++;
+
 			break;
 
 		case RULE_DIVIDE_INT :
+
+			if ( in_function ) {
+				GEN_CONST_STRING_AND_EOL("POPS GF@%tmp1");
+				GEN_CONST_STRING_AND_EOL("TYPE GF@%tmp2 GF@%tmp1");
+				GEN_CONST_STRING_AND_EOL("EQ GF@%tmp2 GF@%tmp2 string@float");
+				GEN_STRING("JUMPIFEQ ?_is_it_float_");
+				GEN_INT(i);
+				GEN_CONST_STRING_AND_EOL(" GF@%tmp2 bool@false");
+				GEN_CONST_STRING_AND_EOL("EXIT int@4");
+				GEN_CONST_STRING_AND_EOL("DPRINT int@4");
+				GEN_STRING("LABEL ?_is_it_float_");
+				GEN_INT(i); GEN_EOL();
+				GEN_CONST_STRING_AND_EOL("PUSHS GF@%tmp1");
+			}
+
+			GEN_CONST_STRING_AND_EOL("POPS GF@%tmp1");
+			GEN_CONST_STRING_AND_EOL("EQ GF@%tmp2 GF@%tmp1 int@0");
+			GEN_STRING("JUMPIFEQ ?_is_it_zero_");
+			GEN_INT(i);
+			GEN_CONST_STRING_AND_EOL(" GF@%tmp2 bool@false");
+			GEN_CONST_STRING_AND_EOL("EXIT int@9");
+			GEN_STRING("LABEL ?_is_it_zero_");
+			GEN_INT(i); GEN_EOL();
+			GEN_CONST_STRING_AND_EOL("PUSHS GF@%tmp1");
 			GEN_CONST_STRING_AND_EOL("IDIVS");
+
+			i++;
+
 			break;
 
 		default :
@@ -582,3 +712,21 @@ bool Gen_function_call (const char *fun_id) {
 
 	return true;
 }
+
+// (string == float) == false (odsek 5.1) zaroven aj None sa tu mozno moze nachadat
+// return bez vyrazu vracia none
+// DEFVAR v if-else
+// a * b / c + d (vsetko integere) tento vyraz nefunguje tam delenie parserom to prejde ale ja to nepretypujem musim vo funkciach riesit aj to
+// + otestovat tie typove kontroly ak sa predaju argumenty zleho typu
+// od gen_expr_calc() vyssie skontrolovat ci sa neprelinaju tmpX a nemozu sa prepisovat navzajom
+// kontrola premennych vo vyrazoch vo funkci ci su definovane - mato a patres
+// matovy nefunguju minuska
+// #nemoze koncit komentarom program inak chyba 1 - maros
+// mato hovoril nieco so string concat
+// doplnit DPRINT
+
+// prejist cele zadanie
+// skontrolovat cely projekt + dokumentacia
+// prejst forum
+// dat prec vsetky DPRINT (alebo ich tam nechat???)
+// make aby bral aj warningy

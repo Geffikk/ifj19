@@ -12,9 +12,11 @@
 
 Lexem_string IFJcode19;
 
+typedef enum {INT, FLOAT, NONE, GLOBAL, LOCAL, STRING} type;
+
 bool Gen_Start ();
 bool Gen_Finish ();
-char* Term_adjustment ( char *term, const int type);
+char* Term_adjustment (const char *term, const int type);
 bool Gen_return ();
 bool Gen_cast_stack_op1 ();
 bool Gen_cast_stack_op2 ();
@@ -22,8 +24,8 @@ bool Gen_push_stack_op (const char *term);
 bool Gen_var_def (const char *var_id);
 bool Gen_save_expr_or_retval (const char *var_id);
 bool Gen_string_concat ();
-bool Gen_type_control (const char *term1, const char *term2);
-bool Gen_expr_calc (Rule_enumeration rule);
+bool Gen_type_control ();
+bool Gen_expr_calc (Rule_enumeration rule, bool in_function);
 bool Gen_if_head ();
 bool Gen_else_head ();
 bool Gen_else_foot ();
@@ -35,6 +37,5 @@ bool Gen_pop_arg (const char *term);
 bool Gen_function_def_foot (const char *fun_id);
 bool Gen_push_arg (const char *term);
 bool Gen_function_call (const char *fun_id);
-bool Gen_type_control (const char *term1, const char *term2);
 
 #endif // CODE_GENERATOR_HEAD

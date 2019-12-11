@@ -20,7 +20,7 @@ typedef enum
     GRT,	// REDUCE         >     2
     END	    // END or ERROR  	    3
 }
-Sign_enumeration;
+        Sign_enumeration;
 
 /** Type of INDEX **/
 typedef enum
@@ -41,7 +41,7 @@ typedef enum
     INDEX_DATA,				        // index for identifier and data types 	13
     INDEX_DOLLAR				    // index for $				            14
 }
-Index_enumeration;
+        Index_enumeration;
 
 /** Type of SYMBOL **/
 typedef enum
@@ -68,7 +68,7 @@ typedef enum
     SYMBOL_STOP, 		    // stop symbol on stack			19
     SYMBOL_NOT_DEFINED	    // not a symbol				    20
 }
-Symbol_enumeration;
+        Symbol_enumeration;
 
 /** Type of RULE **/
 typedef enum
@@ -88,7 +88,7 @@ typedef enum
     RULE_BRACKETS,		// RULE E -> (E)		12
     RULE_NOT_DEFINED	// not a known rule    13
 }
-Rule_enumeration;
+        Rule_enumeration;
 
 /** Parser data **/
 typedef struct
@@ -96,9 +96,9 @@ typedef struct
     Sym_table global_table;
     Sym_table local_table;
 
-    TData* current_process_id;
-    TData* left_side_id;
-    TData* right_side_id;
+    IData * current_process_id;
+    IData * left_side_id;
+    IData * right_side_id;
 
     Token token;
 
@@ -124,4 +124,4 @@ int value(Parser_data* data);
 int print_rule(Parser_data* data);
 int analyza();
 
-#endif //IFJ_19_ANALYZA_H
+#endif

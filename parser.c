@@ -73,7 +73,11 @@ int processing_EOLs(Parser_data* data)
 }
 
 int precedence_table[15][15] =
+<<<<<<< Updated upstream
 {
+=======
+        {
+>>>>>>> Stashed changes
 //       |                                                                                      INPUT TOKEN
 //-------|------------------------------------------------------------------------------------------------->
 //       |          | == | != | <= | >= | <  | >  |  + |  - | *  |  / | // |  ) | (  |type| $ |
@@ -92,7 +96,11 @@ int precedence_table[15][15] =
 /*    O  |      */  {LSS, LSS, LSS, LSS, LSS, LSS, LSS, LSS, LSS, LSS, LSS, MCH, LSS, LSS, END},  // (
 /*    N  |      */  {GRT, GRT, GRT, GRT, GRT, GRT, GRT, GRT, GRT, GRT, GRT, GRT, END, END, GRT},  // id, int, double, string, None (type)
 /*      \|/     */  {LSS, LSS, LSS, LSS, LSS, LSS, LSS, LSS, LSS, LSS, LSS, END, LSS, LSS, END}   // $
+<<<<<<< Updated upstream
 };
+=======
+        };
+>>>>>>> Stashed changes
 
 
 /** Function for transforming token from scanner to symbol
@@ -182,6 +190,7 @@ static Symbol_enumeration get_Symbol (Token* token) // v Pdata v analyze mame za
 }
 
 /** Function for transforming symbol to index for work with precedence table
+<<<<<<< Updated upstream
  *
  *  @param - symbol from token
  *  @return - index for precedence algorithm
@@ -252,6 +261,78 @@ static Index_enumeration get_Index(Symbol_enumeration symbol) // priradi index z
 
 /** Function for counting symbols after stop
  *
+=======
+ *
+ *  @param - symbol from token
+ *  @return - index for precedence algorithm
+ ***/
+static Index_enumeration get_Index(Symbol_enumeration symbol) // priradi index z precedencnej tabulky
+{
+    if (symbol == SYMBOL_EQUAL)
+    {
+        return INDEX_EQUAL;
+    }
+    else if (symbol == SYMBOL_NOT_EQUAL)
+    {
+        return INDEX_NOT_EQUAL;
+    }
+    else if (symbol == SYMBOL_LESS_EQUAL)
+    {
+        return INDEX_LESS_EQUAL;
+    }
+    else if (symbol == SYMBOL_MORE_EQUAL)
+    {
+        return INDEX_MORE_EQUAL;
+    }
+    else if (symbol == SYMBOL_LESS)
+    {
+        return INDEX_LESS;
+    }
+    else if (symbol == SYMBOL_MORE)
+    {
+        return INDEX_MORE;
+    }
+    else if (symbol == SYMBOL_PLUS)
+    {
+        return INDEX_PLUS;
+    }
+    else if (symbol == SYMBOL_MINUS)
+    {
+        return INDEX_MINUS;
+    }
+    else if (symbol == SYMBOL_MULTIPLY)
+    {
+        return INDEX_MULTIPLY;
+    }
+    else if (symbol == SYMBOL_DIVIDE)
+    {
+        return INDEX_DIVIDE;
+    }
+    else if (symbol == SYMBOL_DIVIDE_INTEGER)
+    {
+        return INDEX_DIVIDE_INTEGER;
+    }
+    else if (symbol == SYMBOL_RIGHT_BRACKET)
+    {
+        return INDEX_RIGHT_BRACKET;
+    }
+    else if (symbol == SYMBOL_LEFT_BRACKET)
+    {
+        return INDEX_LEFT_BRACKET;
+    }
+    else if (symbol == SYMBOL_IDENTIFIER || symbol == SYMBOL_INTEGER || symbol == SYMBOL_FLOAT || symbol == SYMBOL_STRING || symbol == SYMBOL_NONE)
+    {
+        return INDEX_DATA;
+    }
+    else
+    {
+        return INDEX_DOLLAR;
+    }
+}
+
+/** Function for counting symbols after stop
+ *
+>>>>>>> Stashed changes
  *  @param - variable, which will change when stop is find
  *  @return - count of symbols after stop
  ***/
@@ -306,7 +387,11 @@ static Data_type get_data_Type (Token* token, Parser_data* data)
     }
     else if (token->type == token_type_identifier)
     {
+<<<<<<< Updated upstream
         TData* symbol = sym_table_search(&data->local_table, token->attribute.s->string);
+=======
+        IData* symbol = sym_table_search(&data->local_table, token->attribute.s->string);
+>>>>>>> Stashed changes
 
         if (symbol == NULL)
         {
@@ -450,7 +535,11 @@ static int semantic_test (Expression_stack_entry* first_operand, Expression_stac
         if (rule == RULE_OPERAND)
         {
             if (first_operand == NULL)
+<<<<<<< Updated upstream
            {
+=======
+            {
+>>>>>>> Stashed changes
                 return error_internal;
             }
             else if (first_operand->data_type == DATA_TYPE_NOT_DEFINED)
@@ -702,11 +791,19 @@ static int expression_reduction (Parser_data* data)
         }
         else if (generation_rule != RULE_OPERAND && generation_rule != RULE_BRACKETS)
         {
+<<<<<<< Updated upstream
                 if (data->in_function == true)
                 {
                     Gen_type_control (); /// function for check of semantic in case of running errors
                 }
                 Gen_expr_calc (generation_rule/*, data->in_function*/);  ///  generation of other operation than concatanation
+=======
+            if (data->in_function == true)
+            {
+                Gen_type_control (); /// function for check of semantic in case of running errors
+            }
+            Gen_expr_calc (generation_rule, data->in_function);  ///  generation of other operation than concatanation
+>>>>>>> Stashed changes
         }
 
         Expression_stack_count_of_pop(&stack_exp, count + 1);                       /// pop of useless stack entries
@@ -764,6 +861,7 @@ static int expression_shift(Parser_data* data, Symbol_enumeration actual_symbol)
             }
         }
         else if (actual_symbol == SYMBOL_INTEGER)
+<<<<<<< Updated upstream
         {
             Gen_push_stack_op (Term_adjustment(data->token.attribute.s->string,0));
         }
@@ -773,6 +871,17 @@ static int expression_shift(Parser_data* data, Symbol_enumeration actual_symbol)
         }
         else if (actual_symbol == SYMBOL_NONE)
         {
+=======
+        {
+            Gen_push_stack_op (Term_adjustment(data->token.attribute.s->string,0));
+        }
+        else if (actual_symbol == SYMBOL_FLOAT)
+        {
+            Gen_push_stack_op (Term_adjustment(data->token.attribute.s->string,1));
+        }
+        else if (actual_symbol == SYMBOL_NONE)
+        {
+>>>>>>> Stashed changes
             Gen_push_stack_op (Term_adjustment("None",2));
         }
         else
@@ -1002,7 +1111,7 @@ int main_body(Parser_data* data)
 
     //check if all functios are define
     for(int i = 0; i < MAX_SYMTABLE_SIZE; i++)
-        for(Sym_table_entry* it = data->global_table[i]; it !=NULL; it = it->next)
+        for(Sym_table_item* it = data->global_table[i]; it != NULL; it = it->next)
             if(!it->data.defined) return error_semantic;
 
     //we are in main now
@@ -1142,9 +1251,15 @@ int par_list2(Parser_data* data)
         Lexem_string *tmp = &temp;
         copy_lexem_string_to_attribute_string(data->token.attribute.s, tmp);
 
+<<<<<<< Updated upstream
 
         stackPush_param(stack_param, tmp->string);
 
+=======
+
+        stackPush_param(stack_param, tmp->string);
+
+>>>>>>> Stashed changes
         MACRO_GET_TOKEN_AND_CHECK_RULE(par_list2);
     }
 
@@ -1272,7 +1387,7 @@ int statement(Parser_data* data)
         //test ci sa premenna nevola ako skor definovana funkcia a viacnasobne pouzitie GLOBALNEJ premennej
         if(data->in_function == false)
         {
-            TData* function_or_variable = sym_table_search(&data->global_table, data->token.attribute.s->string);
+            IData* function_or_variable = sym_table_search(&data->global_table, data->token.attribute.s->string);
             data->left_side_id = function_or_variable;
 
             if(function_or_variable != NULL && function_or_variable->is_function == true)
@@ -1294,6 +1409,10 @@ int statement(Parser_data* data)
                 //GENEROVANIE 2
                 Gen_save_expr_or_retval(Term_adjustment(data->left_side_id->identifier, number_to_term_function));
 
+                if(data->token.type == token_type_EOF)
+                {
+                    return token_scan_accepted;
+                }
                 MACRO_CHECK_TYPE(token_type_EOL);
 
                 // get next token and execute <statement> rule
@@ -1308,7 +1427,7 @@ int statement(Parser_data* data)
         if(data->in_function)
         {
             //ak este nebola definovana premenna ta ju pridame do lokalnej tabulky inak uz bola pouzita cize preskocime
-            TData* var = sym_table_search(&data->local_table, data->token.attribute.s->string);
+            IData* var = sym_table_search(&data->local_table, data->token.attribute.s->string);
             if(var == NULL)
             {
                 data->left_side_id = sym_table_add_symbol(&data->local_table, data->token.attribute.s->string, &internal_error);
@@ -1327,7 +1446,7 @@ int statement(Parser_data* data)
         else{
 
             //ak este nebola definovana premenna ta ju pridame do globalnej tabulky inak uz bola pouzita cize preskocime
-            TData* var = sym_table_search(&data->global_table, data->token.attribute.s->string);
+            IData* var = sym_table_search(&data->global_table, data->token.attribute.s->string);
             if(var == NULL)
             {
                 data->left_side_id = sym_table_add_symbol(&data->global_table, data->token.attribute.s->string, &internal_error);
@@ -1374,6 +1493,10 @@ int statement(Parser_data* data)
         {
             return token_scan_accepted;
         }
+        else if(data->token.type == token_type_dedent)
+        {
+            return token_scan_accepted;
+        }
         MACRO_CHECK_TYPE(token_type_EOL);
 
         // get next token and execute <statement> rule
@@ -1410,7 +1533,7 @@ int statement(Parser_data* data)
             {
                 if(data->in_function == true)
                 {
-                    TData* variable_in_global_table;
+                    IData* variable_in_global_table;
                     variable_in_global_table = sym_table_search(&data->global_table, data->token.attribute.s->string);
                     data->left_side_id = sym_table_search(&data->local_table, data->token.attribute.s->string);
                     if(data->left_side_id == NULL && variable_in_global_table == NULL)
@@ -1478,7 +1601,6 @@ int statement(Parser_data* data)
     /// <statement>  pass EOL  <statement>
     else if(data->token.type == token_type_keyword && data->token.attribute.keyword == keyword_pass)
     {
-        MACRO_GET_TOKEN_AND_CHECK_TYPE(token_type_EOL);
 
         // get next token and exexute <statement> rule
         MACRO_GET_TOKEN();
@@ -1524,7 +1646,8 @@ int statement(Parser_data* data)
     else if(data->token.type == token_type_left_bracket)
     {
 
-        return expression(data);
+        MACRO_CHECK_RULE(expression);
+        return token_scan_accepted;
 
     }
     return error_syntax;
@@ -1549,42 +1672,57 @@ int def_value(Parser_data* data)
 
     if(data->token.type == token_type_identifier || data->token.type == token_type_keyword)
     {
+<<<<<<< Updated upstream
        /* //ak je na zaciatku vyrazu premenna napr b = a + 3
+=======
+
+        //ak je na zaciatku vyrazu premenna napr b = a + 3
+>>>>>>> Stashed changes
         if(data->in_function == true)
         {
-            TData* var1 = sym_table_search(&data->local_table, data->token.attribute.s->string);
+            IData* var1 = sym_table_search(&data->local_table, data->token.attribute.s->string);
             data->right_side_id = sym_table_search(&data->global_table, data->token.attribute.s->string);
             if(var1 == NULL && data->right_side_id != NULL)
             {
-                if(data->token.type != token_type_identifier)
+
+                MACRO_GET_TOKEN_AND_CHECK_TYPE(token_type_left_bracket);
+                MACRO_GET_TOKEN_AND_CHECK_RULE(arg_list);
+                MACRO_CHECK_TYPE(token_type_right_bracket);
+                MACRO_GET_TOKEN();
+                if(data->token.type == token_type_EOF)
                 {
-                    MACRO_GET_TOKEN_AND_CHECK_TYPE(token_type_left_bracket);
-                    MACRO_GET_TOKEN_AND_CHECK_TYPE(token_type_right_bracket);
-                } else{
-                    MACRO_GET_TOKEN_AND_CHECK_TYPE(token_type_left_bracket);
-                    MACRO_GET_TOKEN_AND_CHECK_RULE(arg_list);
-                    MACRO_CHECK_TYPE(token_type_right_bracket);
+                    return token_scan_accepted;
                 }
+                MACRO_CHECK_TYPE(token_type_EOL);
+
 
                 MACRO_GET_TOKEN();
                 return statement(data);
-
             }
             else if (var1 != NULL && var1->is_variable == true)
             {
                 MACRO_CHECK_RULE(expression);
                 return token_scan_accepted;
             }
+<<<<<<< Updated upstream
+
+=======
+            else if(var1 == NULL && data->right_side_id == NULL)
+            {
+                MACRO_CHECK_RULE(expression);
+                return token_scan_accepted;
+            }
+>>>>>>> Stashed changes
 
 
         } else
         {
-            TData* var = sym_table_search(&data->global_table, data->token.attribute.s->string);
+            IData* var = sym_table_search(&data->global_table, data->token.attribute.s->string);
             if(var == NULL)
             {
                 return error_semantic;
             }
-            else if(var->is_variable == true && var != NULL)
+            else if(var != NULL && var->is_variable == true)
             {
                 MACRO_CHECK_RULE(expression);
                 return token_scan_accepted;
@@ -1713,6 +1851,16 @@ int arg_list(Parser_data* data)
         MACRO_GET_TOKEN_AND_CHECK_RULE(arg_list2);
     }
 
+<<<<<<< Updated upstream
+=======
+    //osetrenie ak ma definovana funkcia parameter a nezadame ziadny
+    if(data->param_index != data->right_side_id->params->length_of_lexem_string)
+    {
+        return error_semantic_bad_count_param;
+    }
+
+
+>>>>>>> Stashed changes
     // <arg_list> -> ε
     return token_scan_accepted;
 }
@@ -1756,31 +1904,22 @@ int value(Parser_data* data)
     {
         // <value> -> FLOAT
         case token_type_float:
-            if(data->right_side_id->params->string[data->param_index] == 's')
-                return error_semantic_compatibility;
-            if(data->right_side_id->params->string[data->param_index] == 'i')
-                return error_semantic_compatibility;
 
+            data->right_side_id->params->string[data->param_index] = 'f';
             Gen_push_arg(Term_adjustment(data->token.attribute.s->string, 1));
             break;
 
         // <value> -> INT
         case token_type_int:
 
-            if(data->right_side_id->params->string[data->param_index] == 's')
-                return error_semantic_compatibility;
-            if(data->right_side_id->params->string[data->param_index] == 'f')
-                printf("Treba pretypovat");
-
-
+            data->right_side_id->params->string[data->param_index] = 'i';
             Gen_push_arg(Term_adjustment(data->token.attribute.s->string, 0));
             break;
 
         // <value> -> STRING
         case token_type_str:
-            if(data->right_side_id->params->string[data->param_index] != 's')
-                return error_semantic_compatibility;
 
+            data->right_side_id->params->string[data->param_index] = 's';
             Gen_push_arg(Term_adjustment(data->token.attribute.s->string, 5));
             break;
 
@@ -1789,32 +1928,20 @@ int value(Parser_data* data)
 
             if(data->in_function == true)
             {
-                TData* id = sym_table_search(&data->local_table, data->token.attribute.s->string);
+                IData* id = sym_table_search(&data->local_table, data->token.attribute.s->string);
                 if(!id) return error_semantic;
                 number_to_term_function = 4;
 
                 switch(id->type)
                 {
                     case DATA_TYPE_INTEGER:
-                        /*
-                        if(data->right_side_id->params->string[data->param_index] == 's')
-                            return error_semantic_compatibility;
-                        if(data->right_side_id->params->string[data->param_index] == 'f')
-                            printf("Treba pretypovat");
-                        printf("good");
-                        */
+
                         data->right_side_id->params->string[data->param_index] = 'i';
                         Gen_push_arg(Term_adjustment(data->token.attribute.s->string, number_to_term_function));
                         break;
 
                     case DATA_TYPE_FLOAT:
-                        /*
-                        if(data->right_side_id->params->string[data->param_index] == 's')
-                            return error_semantic_compatibility;
-                        if(data->right_side_id->params->string[data->param_index] == 'i')
-                            return error_semantic_compatibility;
-                        printf("good");
-                        */
+
                         data->right_side_id->params->string[data->param_index] = 'f';
                         Gen_push_arg(Term_adjustment(data->token.attribute.s->string, number_to_term_function));
                         break;
@@ -1834,7 +1961,7 @@ int value(Parser_data* data)
 
 
             } else{
-                TData* id = sym_table_search(&data->global_table, data->token.attribute.s->string);
+                IData* id = sym_table_search(&data->global_table, data->token.attribute.s->string);
                 if(!id) return error_semantic;
                 number_to_term_function = 3;
 
@@ -1935,7 +2062,7 @@ int print_rule(Parser_data* data)
             {
                 if(data->in_function == true)
                 {
-                    TData* variable_in_global_table;
+                    IData* variable_in_global_table;
                     variable_in_global_table = sym_table_search(&data->global_table, data->token.attribute.s->string);
                     data->left_side_id = sym_table_search(&data->local_table, data->token.attribute.s->string);
                     if( (data->left_side_id == NULL) && (variable_in_global_table == NULL) )
@@ -2010,7 +2137,7 @@ bool init_variables(Parser_data* data)
 
     // init IFJ19 functions
     bool internal_error;
-    TData* id;
+    IData* id;
 
     //len(s)
     id = sym_table_add_symbol(&data->global_table, "len", &internal_error);
