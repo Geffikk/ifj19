@@ -111,55 +111,6 @@ static int isIdentifier_Keyword(Lexem_string *str, Token *token)
     return free_source(token_scan_accepted, str); // Return token scan was succes
 }
 
-/** Aply process if lexem is integer
- *
- * @param string - research lexem if is identifier
- * @param token - saving attributes and types to token
- * @return - scan was accepted or denied
- */
-static int isInteger(Lexem_string *string, Token *token)
-{
-    /*
-    // Convert value from lexem string to integer and assign value to attribute
-    int val = (int) strtol(string->string, (char **)NULL, 10);
-    token->attribute.int_number = val;
-     */
-    token->type = token_type_int; // Set responsive token type
-
-    if(!copy_lexem_string_to_attribute_string(string, token->attribute.s))
-    {
-        return free_source(error_internal, string);
-    }
-
-    return free_source(token_scan_accepted, string); // Return token scan was succes
-}
-
-/** Aply process, if lexem is float number
- *
- * @param string - research lexem if is float number
- * @param token - saving attributes and types to token
- * @return - scan was accepted or denied
- */
-static int isFloat(Lexem_string *string, Token *token)
-{
-    /*
-    // Convert value from lexem string to float number and assign value to attribute
-    char *endptr;
-    float value = strtof(string->string, &endptr);
-    if (*endptr)
-    {
-        return free_source(error_internal, string);
-    }
-    token->attribute.float_number = value;
-     */
-    if(!copy_lexem_string_to_attribute_string(string, token->attribute.s))
-    {
-        return free_source(error_internal, string);
-    }
-    token->type = token_type_float; // Set responsive token type
-    return free_source(token_scan_accepted, string); // Return token scan was succes
-}
-
 void set_source_file(FILE *f)
 {
     source_file = f; // Set source file for scanner
@@ -415,7 +366,14 @@ int get_token(Token *token, tStack *stack) {
                 else
                 {
                     ungetc(c, source_file);
-                    return isInteger(str, token);
+                    token->type = token_type_int; // Set responsive token type
+
+                    if(!copy_lexem_string_to_attribute_string(str, token->attribute.s))
+                    {
+                        return free_source(error_internal, str);
+                    }
+
+                    return free_source(token_scan_accepted, str); // Return token scan was succes
                 }
                 break;
 
@@ -554,7 +512,12 @@ int get_token(Token *token, tStack *stack) {
                 else
                 {
                     ungetc(c, source_file);
-                    return isFloat(str, token);
+                    if(!copy_lexem_string_to_attribute_string(str, token->attribute.s))
+                    {
+                        return free_source(error_internal, str);
+                    }
+                    token->type = token_type_float; // Set responsive token type
+                    return free_source(token_scan_accepted, str); // Return token scan was succes
                 }
                 break;
 
@@ -571,7 +534,12 @@ int get_token(Token *token, tStack *stack) {
                 else
                 {
                     ungetc(c, source_file);
-                    return (isFloat(str, token));
+                    if(!copy_lexem_string_to_attribute_string(str, token->attribute.s))
+                    {
+                        return free_source(error_internal, str);
+                    }
+                    token->type = token_type_float; // Set responsive token type
+                    return free_source(token_scan_accepted, str); // Return token scan was succes
                 }
                 break;
 
