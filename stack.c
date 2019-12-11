@@ -5,6 +5,7 @@
 ***********************************************************/
 
 #include "stack.h"
+#include "lexem_string.h"
 
 int STACK_SIZE = MAX_STACK;
 
@@ -16,6 +17,7 @@ void stackError (int error_code)
     printf ( "%s\n", SERR_STRINGS[error_code] );
 }
 
+/**************** STACK FOR INDENTATION **************/
 void stackInit ( tStack* s ) {
 
     if (s == NULL) {
@@ -45,7 +47,6 @@ void stackTop ( const tStack* s, char* c ) {
     }
 }
 
-
 void stackPop ( tStack* s ) {
 
     if(stackEmpty(s) == 0){
@@ -54,7 +55,6 @@ void stackPop ( tStack* s ) {
     }
 }
 
-
 void stackPush ( tStack* s, char c ) {
 
     if(stackFull(s) == 0){
@@ -62,6 +62,60 @@ void stackPush ( tStack* s, char c ) {
         s->arr[s->top] = c;
     }
     else{
+        stackError(SERR_PUSH);
+    }
+}
+
+/**************** STACK FOR PARAMS **************/
+void stackInit_param ( tStack_Param* s ) {
+
+    if (s == NULL) {
+        stackError(SERR_INIT);
+    } else {
+        s->top = -1;
+    }
+}
+
+int stackEmpty_param ( const tStack_Param* s ) {
+
+    return(s->top == -1) ? 1 : 0;
+}
+
+int stackFull_param ( const tStack_Param * s ) {
+
+    return ((STACK_SIZE - 1) == s->top) ? 1 : 0;
+}
+
+void stackPop_param ( tStack_Param* s ) {
+
+    if(stackEmpty_param(s) == 0){
+        s->arr[s->top] = NULL;
+        s->top = s->top -1;
+    }
+}
+
+char* stackTop_param ( tStack_Param* s ) {
+
+    char* c;
+    if(stackEmpty_param(s) == 0){
+        c = s->arr[s->top];
+        return c;
+    }
+    else{
+        stackError(SERR_TOP);
+    }
+}
+
+void stackPush_param ( tStack_Param* s, char* c ) {
+
+    if(stackFull_param(s) == 0)
+    {
+        s->top = s->top + 1;
+        s->arr[s->top] = c;
+
+    }
+    else
+    {
         stackError(SERR_PUSH);
     }
 }

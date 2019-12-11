@@ -17,6 +17,7 @@ typedef enum
 	DATA_TYPE_INTEGER,
 	DATA_TYPE_FLOAT,
 	DATA_TYPE_STRING,
+	DATA_TYPE_NONE
 } Data_type;
 
 
@@ -30,19 +31,19 @@ typedef struct
 	bool global;		  // Global or local variable.
 	bool is_function;     // Is function
 	bool is_variable;     // Is variable
-} TData;
+} IData;
 
 
 /** Representation of item in table **/
-typedef struct htab_list_entry
+typedef struct htab_listitem
 {
 	char *key;                       // identifier
-	TData data;                      // data
-	struct htab_list_entry *next;    // pointer to next item
-} Sym_table_entry;
+	IData data;                      // data
+	struct htab_listitem *next;    // pointer to next item
+} Sym_table_item;
 
 /** Symbol table **/
-typedef Sym_table_entry* Sym_table[MAX_SYMTABLE_SIZE];
+typedef Sym_table_item* Sym_table[MAX_SYMTABLE_SIZE];
 
 
 /** Incialization of table
@@ -60,7 +61,7 @@ void sym_table_init(Sym_table *table);
  */
 
 
-TData *sym_table_add_symbol(Sym_table *table, const char *key, bool* malloc_failed);
+IData *sym_table_add_symbol(Sym_table *table, const char *key, bool* malloc_failed);
 
 /** Function adds parameter to function
  *
@@ -68,7 +69,7 @@ TData *sym_table_add_symbol(Sym_table *table, const char *key, bool* malloc_fail
  * @param data_type - is type of parameter to add
  * @return true if parameter was successfully added, otherwise, false
  */
-bool sym_table_add_parameter(TData *data, int data_type);
+bool sym_table_add_parameter(IData *data, int data_type);
 
 
 /** Function finds symbol and return its data
@@ -77,7 +78,7 @@ bool sym_table_add_parameter(TData *data, int data_type);
  * @param key - is pointer to key
  * @return null if identifier(key) was not found or pointer to data of symbol if was found
  */
-TData *sym_table_search(Sym_table *table, const char *key);
+IData *sym_table_search(Sym_table *table, const char *key);
 
 
 /** Free all variables from table

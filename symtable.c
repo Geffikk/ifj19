@@ -35,7 +35,7 @@ void sym_table_init(Sym_table *table)
     }
 }
 
-TData *sym_table_add_symbol(Sym_table *table, const char *key, bool* malloc_failed)
+IData *sym_table_add_symbol(Sym_table *table, const char *key, bool* malloc_failed)
 {
 	*malloc_failed = false;
 
@@ -46,9 +46,9 @@ TData *sym_table_add_symbol(Sym_table *table, const char *key, bool* malloc_fail
 	}
 
 	int index = hash_function(key);
-	Sym_table_entry *tmp_last = NULL;
+	Sym_table_item *tmp_last = NULL;
 
-	for (Sym_table_entry *tmp = (*table)[index]; tmp != NULL; tmp = tmp->next)
+	for (Sym_table_item *tmp = (*table)[index]; tmp != NULL; tmp = tmp->next)
 	{
 		if (!strcmp(key, tmp->key))
 		{
@@ -58,7 +58,7 @@ TData *sym_table_add_symbol(Sym_table *table, const char *key, bool* malloc_fail
 		tmp_last = tmp;
 	}
 
-	Sym_table_entry *new_entry = (Sym_table_entry *)malloc(sizeof(Sym_table_entry));
+	Sym_table_item *new_entry = (Sym_table_item *)malloc(sizeof(Sym_table_item));
 	if (new_entry == NULL)
 	{
 		*malloc_failed = true;
@@ -107,7 +107,7 @@ TData *sym_table_add_symbol(Sym_table *table, const char *key, bool* malloc_fail
 	return &new_entry->data;
 }
 
-bool sym_table_add_parameter(TData *data, int data_type)
+bool sym_table_add_parameter(IData *data, int data_type)
 {
 	if (data == NULL){
         return false;
@@ -146,7 +146,7 @@ bool sym_table_add_parameter(TData *data, int data_type)
 	return true;
 }
 
-TData *sym_table_search(Sym_table *table, const char *key)
+IData *sym_table_search(Sym_table *table, const char *key)
 {
 	if (table == NULL || key == NULL)
     {
@@ -155,7 +155,7 @@ TData *sym_table_search(Sym_table *table, const char *key)
 
 	unsigned long index = hash_function(key);
 
-	Sym_table_entry *tmp = (*table)[index];
+	Sym_table_item *tmp = (*table)[index];
 	while(tmp != NULL)
     {
         if (!strcmp(key, tmp->key))
@@ -176,11 +176,11 @@ void sym_table_free(Sym_table *table)
 	    return;
     }
 
-	Sym_table_entry *tmp_next = NULL;
+	Sym_table_item *tmp_next = NULL;
 
 	for (int i = 0; i < MAX_SYMTABLE_SIZE; i++)
 	{
-		for (Sym_table_entry *tmp = (*table)[i]; tmp != NULL; tmp = tmp_next)
+		for (Sym_table_item *tmp = (*table)[i]; tmp != NULL; tmp = tmp_next)
 		{
 			tmp_next = tmp->next;
 			free(tmp->key);
