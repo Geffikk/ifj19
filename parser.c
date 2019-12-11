@@ -73,15 +73,7 @@ int processing_EOLs(Parser_data* data)
 }
 
 int precedence_table[15][15] =
-<<<<<<< HEAD
         {
-=======
-<<<<<<< Updated upstream
-{
-=======
-        {
->>>>>>> Stashed changes
->>>>>>> master
 //       |                                                                                      INPUT TOKEN
 //-------|------------------------------------------------------------------------------------------------->
 //       |          | == | != | <= | >= | <  | >  |  + |  - | *  |  / | // |  ) | (  |type| $ |
@@ -100,15 +92,7 @@ int precedence_table[15][15] =
 /*    O  |      */  {LSS, LSS, LSS, LSS, LSS, LSS, LSS, LSS, LSS, LSS, LSS, MCH, LSS, LSS, END},  // (
 /*    N  |      */  {GRT, GRT, GRT, GRT, GRT, GRT, GRT, GRT, GRT, GRT, GRT, GRT, END, END, GRT},  // id, int, double, string, None (type)
 /*      \|/     */  {LSS, LSS, LSS, LSS, LSS, LSS, LSS, LSS, LSS, LSS, LSS, END, LSS, LSS, END}   // $
-<<<<<<< HEAD
         };
-=======
-<<<<<<< Updated upstream
-};
-=======
-        };
->>>>>>> Stashed changes
->>>>>>> master
 
 
 /** Function for transforming token from scanner to symbol
@@ -198,7 +182,6 @@ static Symbol_enumeration get_Symbol (Token* token) // v Pdata v analyze mame za
 }
 
 /** Function for transforming symbol to index for work with precedence table
-<<<<<<< Updated upstream
  *
  *  @param - symbol from token
  *  @return - index for precedence algorithm
@@ -269,78 +252,6 @@ static Index_enumeration get_Index(Symbol_enumeration symbol) // priradi index z
 
 /** Function for counting symbols after stop
  *
-=======
- *
- *  @param - symbol from token
- *  @return - index for precedence algorithm
- ***/
-static Index_enumeration get_Index(Symbol_enumeration symbol) // priradi index z precedencnej tabulky
-{
-    if (symbol == SYMBOL_EQUAL)
-    {
-        return INDEX_EQUAL;
-    }
-    else if (symbol == SYMBOL_NOT_EQUAL)
-    {
-        return INDEX_NOT_EQUAL;
-    }
-    else if (symbol == SYMBOL_LESS_EQUAL)
-    {
-        return INDEX_LESS_EQUAL;
-    }
-    else if (symbol == SYMBOL_MORE_EQUAL)
-    {
-        return INDEX_MORE_EQUAL;
-    }
-    else if (symbol == SYMBOL_LESS)
-    {
-        return INDEX_LESS;
-    }
-    else if (symbol == SYMBOL_MORE)
-    {
-        return INDEX_MORE;
-    }
-    else if (symbol == SYMBOL_PLUS)
-    {
-        return INDEX_PLUS;
-    }
-    else if (symbol == SYMBOL_MINUS)
-    {
-        return INDEX_MINUS;
-    }
-    else if (symbol == SYMBOL_MULTIPLY)
-    {
-        return INDEX_MULTIPLY;
-    }
-    else if (symbol == SYMBOL_DIVIDE)
-    {
-        return INDEX_DIVIDE;
-    }
-    else if (symbol == SYMBOL_DIVIDE_INTEGER)
-    {
-        return INDEX_DIVIDE_INTEGER;
-    }
-    else if (symbol == SYMBOL_RIGHT_BRACKET)
-    {
-        return INDEX_RIGHT_BRACKET;
-    }
-    else if (symbol == SYMBOL_LEFT_BRACKET)
-    {
-        return INDEX_LEFT_BRACKET;
-    }
-    else if (symbol == SYMBOL_IDENTIFIER || symbol == SYMBOL_INTEGER || symbol == SYMBOL_FLOAT || symbol == SYMBOL_STRING || symbol == SYMBOL_NONE)
-    {
-        return INDEX_DATA;
-    }
-    else
-    {
-        return INDEX_DOLLAR;
-    }
-}
-
-/** Function for counting symbols after stop
- *
->>>>>>> Stashed changes
  *  @param - variable, which will change when stop is find
  *  @return - count of symbols after stop
  ***/
@@ -395,15 +306,7 @@ static Data_type get_data_Type (Token* token, Parser_data* data)
     }
     else if (token->type == token_type_identifier)
     {
-<<<<<<< HEAD
         IData* symbol = sym_table_search(&data->local_table, token->attribute.s->string);
-=======
-<<<<<<< Updated upstream
-        TData* symbol = sym_table_search(&data->local_table, token->attribute.s->string);
-=======
-        IData* symbol = sym_table_search(&data->local_table, token->attribute.s->string);
->>>>>>> Stashed changes
->>>>>>> master
 
         if (symbol == NULL)
         {
@@ -546,15 +449,7 @@ static int semantic_test (Expression_stack_entry* first_operand, Expression_stac
         if (rule == RULE_OPERAND)
         {
             if (first_operand == NULL)
-<<<<<<< HEAD
             {
-=======
-<<<<<<< Updated upstream
-           {
-=======
-            {
->>>>>>> Stashed changes
->>>>>>> master
                 return error_internal;
             }
             else if (first_operand->data_type == DATA_TYPE_NOT_DEFINED)
@@ -806,25 +701,11 @@ static int expression_reduction (Parser_data* data)
         }
         else if (generation_rule != RULE_OPERAND && generation_rule != RULE_BRACKETS)
         {
-<<<<<<< HEAD
-=======
-<<<<<<< Updated upstream
-                if (data->in_function == true)
-                {
-                    Gen_type_control (); /// function for check of semantic in case of running errors
-                }
-                Gen_expr_calc (generation_rule/*, data->in_function*/);  ///  generation of other operation than concatanation
-=======
->>>>>>> master
             if (data->in_function == true)
             {
                 Gen_type_control (); /// function for check of semantic in case of running errors
             }
             Gen_expr_calc (generation_rule, data->in_function);  ///  generation of other operation than concatanation
-<<<<<<< HEAD
-=======
->>>>>>> Stashed changes
->>>>>>> master
         }
 
         Expression_stack_count_of_pop(&stack_exp, count + 1);                       /// pop of useless stack entries
@@ -882,7 +763,6 @@ static int expression_shift(Parser_data* data, Symbol_enumeration actual_symbol)
             }
         }
         else if (actual_symbol == SYMBOL_INTEGER)
-<<<<<<< Updated upstream
         {
             Gen_push_stack_op (Term_adjustment(data->token.attribute.s->string,0));
         }
@@ -892,17 +772,6 @@ static int expression_shift(Parser_data* data, Symbol_enumeration actual_symbol)
         }
         else if (actual_symbol == SYMBOL_NONE)
         {
-=======
-        {
-            Gen_push_stack_op (Term_adjustment(data->token.attribute.s->string,0));
-        }
-        else if (actual_symbol == SYMBOL_FLOAT)
-        {
-            Gen_push_stack_op (Term_adjustment(data->token.attribute.s->string,1));
-        }
-        else if (actual_symbol == SYMBOL_NONE)
-        {
->>>>>>> Stashed changes
             Gen_push_stack_op (Term_adjustment("None",2));
         }
         else
@@ -1266,15 +1135,9 @@ int par_list2(Parser_data* data)
         Lexem_string *tmp = &temp;
         copy_lexem_string_to_attribute_string(data->token.attribute.s, tmp);
 
-<<<<<<< Updated upstream
 
         stackPush_param(stack_param, tmp->string);
 
-=======
-
-        stackPush_param(stack_param, tmp->string);
-
->>>>>>> Stashed changes
         MACRO_GET_TOKEN_AND_CHECK_RULE(par_list2);
     }
 
@@ -1687,17 +1550,8 @@ int def_value(Parser_data* data)
 
     if(data->token.type == token_type_identifier || data->token.type == token_type_keyword)
     {
-<<<<<<< HEAD
 
         //ak je na zaciatku vyrazu premenna napr b = a + 3
-=======
-<<<<<<< Updated upstream
-       /* //ak je na zaciatku vyrazu premenna napr b = a + 3
-=======
-
-        //ak je na zaciatku vyrazu premenna napr b = a + 3
->>>>>>> Stashed changes
->>>>>>> master
         if(data->in_function == true)
         {
             IData* var1 = sym_table_search(&data->local_table, data->token.attribute.s->string);
@@ -1724,21 +1578,11 @@ int def_value(Parser_data* data)
                 MACRO_CHECK_RULE(expression);
                 return token_scan_accepted;
             }
-<<<<<<< HEAD
-=======
-<<<<<<< Updated upstream
-
-=======
->>>>>>> master
             else if(var1 == NULL && data->right_side_id == NULL)
             {
                 MACRO_CHECK_RULE(expression);
                 return token_scan_accepted;
             }
-<<<<<<< HEAD
-=======
->>>>>>> Stashed changes
->>>>>>> master
 
 
         } else
@@ -1872,11 +1716,6 @@ int arg_list(Parser_data* data)
         MACRO_GET_TOKEN_AND_CHECK_RULE(arg_list2);
     }
 
-<<<<<<< HEAD
-=======
-<<<<<<< Updated upstream
-=======
->>>>>>> master
     //osetrenie ak ma definovana funkcia parameter a nezadame ziadny
     if(data->param_index != data->right_side_id->params->length_of_lexem_string)
     {
@@ -1884,10 +1723,6 @@ int arg_list(Parser_data* data)
     }
 
 
-<<<<<<< HEAD
-=======
->>>>>>> Stashed changes
->>>>>>> master
     // <arg_list> -> ε
     return token_scan_accepted;
 }
