@@ -1,0 +1,35 @@
+1. strana = Úvodná strana
+	uvítanie
+	predstavenie tímu, projektu
+
+2. strana = Implementácia
+	len zrýchlene všetko opísať
+	Ktorá časť je prekladová, ktorá behová
+	napr., že scanner, lexikálna analýza, parser syntaktická a sémantická analýza, atď.
+
+3. strana = Scanner
+	Scanner funguje ako deterministický konečný automat. Implementovali sme ho pomocou funkcie switch, 
+	pričom každý stav odpovedá konkrétnemu stavu automatu. Ak taký stav nieje, scanner vracia chybu. 
+	Funkciou scanner je načítavať lexémy zo zdrojového súboru. Lexém je následne prevedený na tkz. Token. 
+	Token je napr. kľúčové slovo alebo identifikátor. Jeden lexém môže byť v závislosti od situácie 
+	rôzny typ tokena.
+4. strana = Parser
+	Parser je najpodstatnejšia časť prekladača. Funkciou parsera je analýza, či reťazec tokenov 
+	je napísaný správne podľa pravidiel jazyka IFJ19. Parser žiada postupne od scanneru tokeny a analyzuje ich
+	na základe pravidiel LL gramatiky. Kontroluje napríklad správny zápis funkcií a správny počet parametrov, 
+	ale vykonáva aj sémantické kontroly. To znamená, že pozerá správnu kompabilitu dátových typov. 
+	V prípade, že parser dostane výraz, skontroluje ho pomocou pravidiel zapísaných v precedenčnej tabulke,
+	ktorú sme implementovali ako dvojrozmerné pole. Ak syntaktická alebo sémantická analýza nájde nekorektnosť, 
+	ukončí sa preklad a vypíše chybu náležitú chybu. 
+5. strana = Code Gen
+	Generátor pri štarte prekladača generuje hlavičku. V hlavičke sa nachádzajú vstavané funkcie jazyka IFJ19 
+	a preddefinované globálne premenné. V generátore kódu sú jednoduché funkcie, ktoré sú volané parserom 
+	v prípade potreby (napr. rôzne behové kontroly, ktoré nie je možné vykonať za prekladu). V prípade
+	úspešného prekladu sa generuje výstupný kód na štandartný výstup. Pre zjednodušenie prehľadu výstupného kódu
+	sa pred každou použitou funkciou vygeneruje krátky komentár, ktorý ju popisuje. 
+ 
+6. strana = Práca v tíme
+	Nejaké kecy o tom, že bývame spolu na internáte, tak sme väčšinou pracovali spolu, a ak to nebolo možné, využívali sme rôzne 
+	komunikačné prostriedky, napr. Discord. A potom ešte, aké sme používali programy a na čo.
+	
+	
